@@ -1,0 +1,2925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <title>变压器差动保护 · 综合计算（速断折线版） D-3.2.8</title>
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIuWOnOeUqOWbnuiCo+W3peeUn+iDvemhguS6uiIsCiAgInNob3J0X25hbWUiOiAi5Y6c55So5bem6IKj5bel55SfIiwKICAiZGVzY3JpcHRpb24iOiAi5Li75Yqh5bee6IKj5Y2c5YC86K6+572u5Zmo5Yi2IiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxYTVmYjQiLAogICJ0aGVtZV9jb2xvciI6ICIjMWM2N2M2IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLDxzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTI4IDEyOCc+PHJlY3Qgd2lkdGg9JzEyOCcgaGVpZ2h0PScxMjgnIHJ4PScyMCcgZmlsbD0nIzFhNWZiNCcvPjx0ZXh0IHg9JzY0JyB5PSc4MCcgZm9udC1zaXplPSc2MCcgdGV4dC1hbmNob3I9J21pZGRsZScgZmlsbD0nd2hpdGUnIGZvbnQtZmFtaWx5PSdBcmlhbCc+5beePC90ZXh0Pjwvc3ZnPg=="LAogICAgICAic2l6ZXMiOiAiMTI4eDEyNCIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='20' fill='%231a5fb4'/%3E%3Ctext x='64' y='80' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3E%E5%8F%98%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- ============================================================
+         样式：与原版完全一致，仅补充区块注释
+         ============================================================ -->
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI','Microsoft YaHei',sans-serif; -webkit-tap-highlight-color:transparent; }
+
+        /* ---- 设计变量 ---- */
+        :root { --primary-color:#1a5fb4; --secondary-color:#2d7bc6; --background-color:#f5f5f5; --card-color:#ffffff; --text-color:#333333; --border-color:#dddddd; --shadow:0 4px 12px rgba(0,0,0,0.1); --transition:all 0.3s ease; --soft-bg:#f9fafb; --soft-border:rgba(0,0,0,0.05); --input-bg:#ffffff; --label-color:#555555; --unit-color:#999999; --tab-bg:#e9ecef; --tab-btn-bg:#f8f9fa; --result-bg:#f0f7ff; --result-highlight-bg:#fffaf3; --note-bg:#fff9e6; --file-ops-bg:#f8f9fa; --k0-bg:#e9ecef; --k0-color:#666666; --solution-bg:#e8f4f8; --chart-bg:#fafafa; --display-box-bg:#f0fff4; --instant-box-bg:#fff8f0; --critical-bg:#fffaf3; }
+
+        /* ---- 基础布局 ---- */
+        body { background:var(--background-color); color:var(--text-color); line-height:1.5; padding:10px; font-size:16px; overflow-x:hidden; }
+        .container { max-width:800px; margin:0 auto; background:var(--card-color); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; animation:fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ---- 页头 ---- */
+        header { background:linear-gradient(135deg,var(--primary-color),var(--secondary-color)); color:white; padding:20px 15px; text-align:center; position:relative; }
+        .version-tag { position:absolute; top:10px; right:15px; background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; }
+        h1 { font-size:1.6rem; margin-bottom:8px; font-weight:600; }
+        .app-description { font-size:0.9rem; opacity:0.9; }
+
+        /* ---- 文件操作按钮 ---- */
+        .file-ops { padding:10px 15px; display:flex; gap:10px; background:var(--file-ops-bg); border-bottom:1px solid var(--border-color); }
+        .file-ops .action-btn { flex:1; padding:12px; font-size:0.85rem; }
+        .file-ops #export-btn { background:#28a745; }
+        .file-ops #export-btn:hover { background:#218838; }
+        .file-ops #import-btn { background:#17a2b8; }
+        .file-ops #import-btn:hover { background:#138496; }
+        .file-ops input[type="file"] { display:none; }
+
+        /* ---- 标签页导航 ---- */
+        .tab-buttons { display:flex; flex-wrap:wrap; background:var(--tab-bg); padding:12px 12px 0 12px; gap:6px; }
+        .tab-button { flex:1; min-width:70px; padding:12px 8px; text-align:center; background:var(--tab-btn-bg); border:1px solid var(--border-color); border-bottom:none; border-radius:12px 12px 0 0; font-size:0.8rem; font-weight:600; color:var(--text-color); cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+        .tab-button:hover { background:var(--card-color); color:var(--primary-color); }
+        .tab-button.active { background:var(--card-color); color:var(--primary-color); border-color:var(--primary-color) var(--border-color) var(--card-color) var(--border-color); border-width:2px 1px 0 1px; font-weight:700; box-shadow:0 -4px 8px rgba(26,95,180,0.15); }
+        .tab-content { display:none; padding:20px; animation:stackIn 0.3s; background:var(--card-color); border-radius:0 0 16px 16px; }
+        .tab-content.active { display:block; }
+        @keyframes stackIn { from { opacity:0.6; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ---- 分类区块 / 输入框 ---- */
+        .category-section { background:var(--soft-bg); border-radius:16px; padding:20px; margin-bottom:25px; box-shadow:0 4px 10px rgba(0,0,0,0.03); border:1px solid var(--soft-border); }
+        .category-title { font-size:1.1rem; color:var(--primary-color); margin-bottom:15px; font-weight:600; display:flex; align-items:center; gap:8px; }
+        .input-group { margin-bottom:20px; }
+        label { display:block; margin-bottom:8px; font-weight:600; color:var(--label-color); font-size:0.9rem; }
+        input, select { width:100%; padding:15px; border:1px solid var(--border-color); border-radius:10px; font-size:1rem; transition:var(--transition); background:var(--input-bg); color:var(--text-color); }
+        input:focus, select:focus { border-color:var(--primary-color); outline:none; box-shadow:0 0 0 3px rgba(26,95,180,0.2); }
+        .input-with-unit { position:relative; }
+        .unit { position:absolute; right:15px; top:50%; transform:translateY(-50%); color:var(--unit-color); font-size:0.9rem; pointer-events:none; }
+
+        /* ---- 同步容量 ---- */
+        .sync-buttons { display:flex; gap:10px; margin-bottom:20px; align-items:center; }
+        .sync-buttons select { flex:1; padding:15px 10px; border:1px solid var(--border-color); border-radius:10px; font-size:0.9rem; font-weight:600; background:var(--input-bg); color:var(--label-color); cursor:pointer; transition:var(--transition); }
+        .sync-buttons select:focus { border-color:var(--primary-color); outline:none; box-shadow:0 0 0 3px rgba(26,95,180,0.2); }
+        .sync-buttons button { flex:1; padding:15px 5px; white-space:nowrap; background:#3498db; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:var(--transition); font-size:0.9rem; }
+        .sync-buttons button:hover { filter:brightness(1.1); }
+
+        /* ---- K0 预设按钮 ---- */
+        .option-group { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+        .k0-preset { flex:0 0 auto; padding:13px 16px; border:2px solid var(--border-color); border-radius:10px; cursor:pointer; font-weight:600; background:var(--k0-bg); color:var(--k0-color); text-align:center; transition:var(--transition); min-width:60px; }
+        .k0-preset:hover { border-color:var(--primary-color); background:var(--soft-bg); color:var(--primary-color); }
+        .k0-preset.active { background:var(--primary-color); color:white; border-color:var(--primary-color); box-shadow:0 4px 10px rgba(26,95,180,0.3); }
+        .k0-input-wrap { flex:1; min-width:100px; }
+        .k0-input-wrap input { width:100%; padding:13px 15px; border:1px solid var(--border-color); border-radius:10px; font-size:1rem; font-weight:600; background:var(--input-bg); color:var(--text-color); transition:var(--transition); }
+        .k0-input-wrap input:focus { border-color:var(--primary-color); outline:none; box-shadow:0 0 0 3px rgba(26,95,180,0.2); }
+
+        /* ---- 结果框 ---- */
+        .result-box { background:var(--result-bg); border-left:4px solid var(--primary-color); padding:15px; margin-bottom:15px; border-radius:10px; }
+        .result-box.highlight { border-left-color:#e67e22; background:var(--result-highlight-bg); }
+        .result-title { font-weight:600; margin-bottom:5px; color:var(--primary-color); font-size:0.9rem; }
+        .result-box.highlight .result-title { color:#e67e22; }
+        .result-value { font-size:1.1rem; font-weight:600; color:var(--text-color); }
+
+        /* ---- 操作按钮 ---- */
+        button.action-btn { background:var(--primary-color); color:white; border:none; padding:15px; border-radius:10px; cursor:pointer; font-size:0.9rem; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:10px; }
+        button.action-btn:active { transform:scale(0.97); }
+        .action-btn-knee { background:#16a085; } .action-btn-knee:hover { background:#148f77; }
+        .action-btn-inverse { background:#8e44ad; } .action-btn-inverse:hover { background:#7d3c98; }
+        .action-btn-action { background:#27ae60; } .action-btn-action:hover { background:#219a52; }
+        .action-btn-instant { background:#e67e22; } .action-btn-instant:hover { background:#d35400; }
+        .critical-state-btn { background:#2ecc71; } .critical-state-btn:hover { background:#27ae60; }
+        .two-buttons-row { display:flex; gap:10px; margin-top:10px; align-items:center; flex-wrap:wrap; }
+        .two-buttons-row button { flex:1; margin-top:0; }
+
+        /* ---- 提示 / 工具提示 / 反推结果 ---- */
+        .note { background:var(--note-bg); padding:15px; border-radius:10px; margin-top:20px; font-size:0.9rem; border-left:3px solid #ffc107; }
+
+        /* ---- 可折叠模块（模块化区块） ---- */
+        details.collapsible { background:var(--soft-bg); border-radius:16px; margin-bottom:25px; box-shadow:0 4px 10px rgba(0,0,0,0.03); border:1px solid var(--soft-border); overflow:hidden; }
+        details.collapsible > summary { list-style:none; cursor:pointer; padding:18px 20px; font-size:1.1rem; color:var(--primary-color); font-weight:600; display:flex; align-items:center; gap:8px; user-select:none; }
+        details.collapsible > summary::-webkit-details-marker { display:none; }
+        details.collapsible > summary::marker { content:''; }
+        details.collapsible > summary:hover { background:rgba(127,127,127,0.07); }
+        details.collapsible > summary .collapse-hint { font-size:0.75rem; font-weight:400; opacity:0.65; }
+        details.collapsible > summary .collapse-caret { margin-left:auto; font-size:0.85rem; opacity:0.7; transition:transform 0.2s ease; }
+        details.collapsible[open] > summary .collapse-caret { transform:rotate(180deg); }
+        details.collapsible .collapsible-body { padding:0 20px 20px; }
+        details.collapsible .change-list { margin:0 0 0 20px; line-height:1.9; font-size:0.9rem; }
+        details.collapsible .change-list li { margin-bottom:6px; }
+        details.collapsible .change-list .sub { opacity:0.75; font-size:0.85rem; }
+        details.collapsible .change-list code { background:rgba(127,127,127,0.15); padding:0 4px; border-radius:4px; font-size:0.85em; }
+
+        /* ---- 可选模块（测试功能）基础 ---- */
+        .opt-note { background:var(--note-bg); padding:12px 15px; border-radius:10px; font-size:0.85rem; line-height:1.75; border-left:3px solid #ffc107; }
+        .opt-note strong { color:var(--primary-color); }
+        .opt-sub { margin:16px 0 8px; font-weight:700; font-size:0.9rem; color:var(--primary-color); }
+        .opt-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+        .opt-row .action-btn { flex:1 1 170px; margin-top:0; min-width:0; }
+        .opt-meta { margin-top:10px; font-size:0.82rem; line-height:1.8; opacity:0.88; word-break:break-word; }
+        .opt-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:0.84rem; }
+        .opt-table th { background:var(--tab-bg); color:var(--primary-color); padding:8px 10px; border:1px solid var(--border-color); font-weight:700; text-align:left; }
+        .opt-table td { padding:7px 10px; border:1px solid var(--border-color); vertical-align:top; }
+        .opt-table td.opt-k { font-weight:600; width:31%; }
+        .opt-table td.opt-v { font-variant-numeric:tabular-nums; font-weight:700; color:var(--primary-color); width:15%; white-space:nowrap; }
+        .opt-table td.opt-u { width:12%; white-space:nowrap; opacity:0.9; }
+        .opt-table td.opt-h { width:13%; font-size:0.78rem; opacity:0.8; }
+        .opt-table td.opt-s { font-size:0.76rem; opacity:0.72; }
+        .opt-table tr.opt-group td { background:rgba(127,127,127,0.10); font-weight:700; }
+        .opt-miss { color:#c0392b; font-weight:600; }
+        .opt-tag { display:inline-block; padding:1px 6px; margin-left:6px; border-radius:6px; font-size:0.7rem; font-weight:700; background:var(--k0-bg); color:var(--k0-color); vertical-align:middle; }
+        .opt-tag.warn { background:#ffe3e3; color:#c0392b; }
+        body.dark .opt-tag.warn { background:#4a2020; color:#ff9d9d; }
+
+        /* ---- 可选模块版本管理（D-3.2.5 新增）---- */
+        .mod-ver { display:inline-block; margin-left:7px; padding:1px 7px; border-radius:6px; font-size:0.7rem; font-weight:800; letter-spacing:0.02em; background:var(--k0-bg); color:var(--k0-color); vertical-align:middle; white-space:nowrap; }
+        .mod-ver.changed { background:#fff1cf; color:#8a6100; }
+        body.dark .mod-ver.changed { background:#4a3b16; color:#ffd479; }
+        .opt-ver-table td.ov-code { width:6%; white-space:nowrap; font-weight:800; color:var(--primary-color); }
+        .opt-ver-table td.ov-ver { width:9%; white-space:nowrap; font-weight:800; color:var(--primary-color); font-variant-numeric:tabular-nums; }
+        .opt-ver-table td.ov-since { width:11%; white-space:nowrap; font-size:0.79rem; opacity:0.85; font-variant-numeric:tabular-nums; }
+        #opt-version-panel .note code { background:rgba(127,127,127,0.15); padding:0 4px; border-radius:4px; font-size:0.85em; }
+
+        /* ---- 可选模块：二次电流角度计算器（原 T·v1.0.0，样式已作用域隔离）---- */
+        .angle-module { --am-blue:#1477c9; --am-blue-deep:#0b4f8a; --am-cyan:#1da9b9; --am-ink:#18293b; --am-muted:#687b8e; --am-line:#d7e2ec; --am-line-strong:#bfd0df; --am-surface:#ffffff; --am-surface-soft:#f5f8fc; --am-surface-blue:#edf6ff; --am-green:#118461; background:linear-gradient(135deg,#f2f8fc,#f7fafd); border:1px solid var(--am-line); border-radius:14px; padding:18px; color:var(--am-ink); }
+        body.dark .angle-module { background:#1b1b1b; border-color:#3a3a3a; --am-ink:#e0e0e0; --am-muted:#a9b4be; --am-line:#3a3a3a; --am-line-strong:#4d4d4d; --am-surface:#242424; --am-surface-soft:#202020; --am-surface-blue:#22303c; --am-blue-deep:#7fb6e6; --am-blue:#4a90d9; --am-green:#4ddba0; }
+        .angle-module .am-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding-bottom:14px; border-bottom:1px solid var(--am-line); }
+        .angle-module .eyebrow { margin-bottom:4px; color:var(--am-cyan); font-size:0.66rem; font-weight:800; letter-spacing:0.14em; }
+        .angle-module h2 { font-size:1.05rem; letter-spacing:-0.02em; color:var(--am-ink); }
+        .angle-module .heading-note { margin-top:5px; color:var(--am-muted); font-size:0.8rem; }
+        .angle-module .version-chip { display:inline-flex; align-items:center; border:1px solid #c9ddeb; color:var(--am-blue-deep); background:rgba(127,127,127,0.06); border-radius:999px; font-size:0.72rem; font-weight:700; letter-spacing:0.06em; padding:6px 10px; white-space:nowrap; }
+        .angle-module .section-label { display:flex; align-items:center; gap:9px; margin:18px 0 10px; color:var(--am-blue-deep); font-size:0.88rem; font-weight:800; }
+        .angle-module .section-label::before { content:''; width:4px; height:16px; border-radius:4px; background:linear-gradient(var(--am-cyan),var(--am-blue)); }
+        .angle-module .input-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .angle-module .field label { display:block; margin-bottom:5px; color:var(--am-muted); font-size:0.75rem; font-weight:700; }
+        .angle-module .input-wrap { position:relative; }
+        .angle-module .field input, .angle-module .field select { width:100%; height:40px; padding:0 28px 0 10px; border:1px solid var(--am-line-strong); border-radius:9px; outline:none; color:var(--am-ink); background:var(--am-surface); font:inherit; font-size:0.86rem; font-variant-numeric:tabular-nums; }
+        .angle-module .field select { padding-right:10px; cursor:pointer; }
+        .angle-module .field input:focus, .angle-module .field select:focus { border-color:var(--am-blue); box-shadow:0 0 0 3px rgba(20,119,201,0.13); }
+        .angle-module .input-unit { position:absolute; top:50%; right:10px; transform:translateY(-50%); color:#8293a1; font-size:0.72rem; font-weight:600; pointer-events:none; }
+        .angle-module .quick-presets { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; }
+        .angle-module .preset-title { font-size:0.75rem; color:var(--am-muted); font-weight:700; margin-right:2px; }
+        .angle-module .preset-btn { padding:4px 9px; border:1px solid #c9dded; border-radius:6px; background:var(--am-surface-blue); color:var(--am-blue-deep); font-size:0.75rem; font-weight:700; cursor:pointer; }
+        .angle-module .preset-btn:hover { background:#dceeff; border-color:#9eccf0; }
+        .angle-module .btn { width:100%; min-height:40px; margin-top:14px; border:1px solid transparent; border-radius:9px; cursor:pointer; font-size:0.88rem; font-weight:800; color:#fff; background:linear-gradient(105deg,#0b5da2,#158fc0); }
+        .angle-module .btn:hover { filter:brightness(1.07); }
+
+        /* ---- 可选模块 D：表显数值反算 ---- */
+        .drv-table td { padding:5px 7px; }
+        .drv-table input[type="number"] { width:100%; box-sizing:border-box; padding:6px 8px; border:1px solid var(--border-color); border-radius:8px; background:var(--input-bg); color:var(--text-color); font-size:0.84rem; font-weight:600; font-variant-numeric:tabular-nums; }
+        .drv-table input[type="number"]:focus { border-color:var(--primary-color); outline:none; box-shadow:0 0 0 2px rgba(26,95,180,0.2); }
+        .drv-val { font-variant-numeric:tabular-nums; font-weight:700; color:var(--primary-color); white-space:nowrap; width:15%; }
+        .drv-warn { color:#c0392b; font-weight:600; }
+        body.dark .drv-warn { color:#ff9d9d; }
+        .drv-note { margin-top:12px; padding:12px 14px; border-radius:10px; background:var(--soft-bg); border:1px solid var(--soft-border); font-size:0.78rem; line-height:1.85; }
+        .drv-note code { background:rgba(127,127,127,0.15); padding:0 4px; border-radius:4px; font-size:0.88em; }
+
+        /* ---- 可选模块整页容器（外层不可折叠；折叠只发生在页内各模块） ---- */
+        .opt-wrap { background:var(--card-color); border:1px dashed var(--border-color); border-radius:16px; box-shadow:none; margin-bottom:25px; overflow:hidden; }
+        .opt-wrap > .opt-wrap-head { font-size:1.2rem; padding:16px 20px; color:var(--primary-color); font-weight:600; display:flex; align-items:center; gap:8px; }
+        .opt-wrap > .opt-wrap-head .collapse-hint { font-size:0.75rem; font-weight:400; opacity:0.65; }
+        .opt-wrap > .collapsible-body { padding:0 14px 14px; }
+
+        /* ---- 角度计算器：从定值单同步接线方式（钟点数） ---- */
+        .angle-module .am-sync-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; padding:11px 13px; border:1px dashed var(--am-line-strong); border-radius:10px; background:var(--am-surface-blue); }
+        .angle-module .btn-ghost { display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border:1px solid #b9d5ea; border-radius:9px; background:var(--am-surface); color:var(--am-blue-deep); font:inherit; font-size:0.8rem; font-weight:800; cursor:pointer; }
+        .angle-module .btn-ghost:hover { background:#e4f2fd; border-color:#8dc4e8; }
+        .angle-module .am-sync-status { flex:1 1 220px; min-width:0; color:var(--am-muted); font-size:0.76rem; line-height:1.6; word-break:break-word; }
+        .angle-module .am-sync-status.ok { color:var(--am-green); }
+        .angle-module .am-sync-status.warn { color:#b5631a; }
+        body.dark .angle-module .am-sync-status.warn { color:#e0a55c; }
+        body.dark .angle-module .btn-ghost { border-color:#3f5b70; }
+        body.dark .angle-module .btn-ghost:hover { background:#243440; }
+        .angle-module .result-card { margin-top:16px; padding:16px; border:1px solid #cbe3ef; border-radius:12px; background:var(--am-surface-soft); }
+        body.dark .angle-module .result-card { border-color:#33505f; }
+        .angle-module .result-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+        .angle-module .am-rt { font-size:0.86rem; font-weight:800; color:var(--am-blue-deep); }
+        .angle-module .formula-chip { display:inline-flex; align-items:center; border:1px solid #c9ddeb; color:var(--am-blue-deep); background:rgba(127,127,127,0.06); border-radius:999px; font-size:0.7rem; font-weight:700; padding:5px 9px; white-space:nowrap; }
+        .angle-module .result-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-bottom:12px; }
+        .angle-module .metric { padding:11px 13px; border:1px solid rgba(199,222,235,0.9); border-radius:10px; background:var(--am-surface); }
+        .angle-module .metric-label { color:var(--am-muted); font-size:0.75rem; font-weight:700; }
+        .angle-module .metric-value { margin-top:4px; color:var(--am-blue-deep); font-size:1.3rem; font-weight:800; font-variant-numeric:tabular-nums; }
+        .angle-module .metric-value small { font-size:0.58em; font-weight:600; margin-left:2px; }
+        .angle-module .metric.highlight .metric-value { color:var(--am-green); }
+        .angle-module .param-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:0.82rem; background:var(--am-surface); border:1px solid var(--am-line); border-radius:9px; overflow:hidden; }
+        .angle-module .param-table th { text-align:center; padding:9px 10px; background:var(--am-surface-blue); color:var(--am-blue-deep); border-bottom:2px solid #bce0f5; font-size:0.8rem; font-weight:800; }
+        .angle-module .param-table td { text-align:center; padding:9px 10px; border-bottom:1px solid var(--am-line); color:var(--am-ink); font-weight:600; font-variant-numeric:tabular-nums; }
+        .angle-module .param-table tr:last-child td { border-bottom:none; }
+        .angle-module .formula-box { margin-top:14px; padding:12px; border-radius:10px; background:var(--am-surface-soft); border:1px solid var(--am-line); }
+        .angle-module .formula-box strong { display:block; margin-bottom:4px; font-size:0.75rem; color:var(--am-ink); }
+        .angle-module .formula { color:var(--am-blue-deep); font-family:Consolas,"SF Mono",Georgia,serif; font-size:0.85rem; font-weight:700; }
+        .angle-module .formula-note { margin-top:5px; color:var(--am-muted); font-size:0.75rem; }
+        .angle-module .info-box { margin-top:12px; padding:11px 13px; border-left:3px solid #e3a537; border-radius:0 9px 9px 0; color:#77591e; background:#fff9ec; font-size:0.78rem; line-height:1.6; }
+        body.dark .angle-module .info-box { color:#e0c080; background:#3a3520; }
+        .angle-module .am-foot { margin-top:14px; color:var(--am-muted); text-align:center; font-size:0.75rem; }
+        @media (max-width:768px) { .angle-module .input-grid-3 { grid-template-columns:1fr; } }
+
+        .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--primary-color); color:white; padding:12px 20px; border-radius:8px; z-index:1001; opacity:0; transition:0.3s; white-space:nowrap; font-weight:600; font-size:0.9rem; box-shadow:0 6px 20px rgba(0,0,0,0.25); }
+        .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+        .solution { background:var(--solution-bg); padding:10px; border-radius:8px; margin:10px 0; font-weight:500; }
+
+        /* ---- 绘图区 ---- */
+        .chart-container { margin-top:25px; background:var(--card-color); border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .chart-title { font-size:1.1rem; font-weight:600; margin-bottom:15px; color:var(--primary-color); display:flex; align-items:center; }
+        .chart-title i { margin-right:8px; }
+        #brakeCharCanvas { width:100%; height:300px; background:var(--chart-bg); border-radius:8px; display:block; }
+        .chart-legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; font-size:0.8rem; }
+        .legend-item { display:flex; align-items:center; gap:4px; }
+        .chart-points { margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--soft-bg); border:1px dashed var(--soft-border); font-size:0.78rem; display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; }
+        .chart-points .cp-tag { font-weight:700; color:var(--primary-color); }
+        .chart-points .cp-item { font-variant-numeric:tabular-nums; }
+        .chart-points .cp-item b { font-weight:600; opacity:0.75; margin-right:4px; }
+        .chart-points .cp-note { opacity:0.62; }
+        .force-draw-btn { background:#8e44ad; } .force-draw-btn:hover { background:#7d3c98; }
+        .legend-color { display:inline-block; width:12px; height:12px; border-radius:50%; }
+
+        /* ---- 反推按钮组 ---- */
+        .inverse-btn-group { display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; margin-bottom:15px; }
+        .inverse-btn-group button { flex:1; min-width:100px; margin-top:0; }
+
+        /* ---- 响应式 ---- */
+        @media (max-width:600px) { .container { margin:0; border-radius:12px; } .tab-button { padding:10px 4px; font-size:0.7rem; min-width:55px; } .k0-preset { padding:10px 12px; min-width:50px; } .category-section { padding:15px; } #brakeCharCanvas { height:250px; } .file-ops { flex-direction:column; } .inverse-btn-group button { min-width:70px; font-size:0.75rem; padding:12px 4px; } .two-buttons-row { flex-direction:column; align-items:stretch; } }
+
+        /* ================= 移动端适配（D-3.2.7 新增，修 UI 错位 / 表格显示不全） =================
+           实测（Edge 无头 + 手机视口 390/360px）问题清单：
+             ① 顶部 6 个页签被 flex 压扁 → 文字被裁（.tab-button 内容 65px > 可见 53px）；
+             ② 表格固定列宽(%) + 单元格 nowrap → 内容宽 > 容器宽被裁：
+                版本一览表 312>253、定值单读取结果表 288>213、模块 D 结果表 289>213；
+             ③ 模块 D 输入框被挤到 36px，数字显示不全；
+             ④ 角度计算器 .result-grid(minmax(180px)) 在窄屏溢出 39px。
+           对策：页签改为「单行横向滑动」；表格改为「容器内横向滑动 + 压缩内边距」；
+                 版本一览表在 ≤600px 直接变卡片式（label 由 data-label 提供）；输入框给最小宽度。 */
+        @media (max-width:700px) {
+            body { padding:6px; font-size:15px; }
+            .container { border-radius:10px; }
+
+            /* ① 页签：不压缩文字，整条可滑动（手机常见模式） */
+            .tab-buttons { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:6px; padding:8px 8px 0 8px; scrollbar-width:thin; }
+            .tab-buttons::-webkit-scrollbar { height:4px; }
+            .tab-button { flex:0 0 auto; min-width:0; max-width:none; padding:9px 11px; font-size:0.75rem; white-space:nowrap; }
+
+            /* ② 表格：容器内可横向滑动，绝不裁切 */
+            table.opt-table, table.param-table { display:block; width:100%; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; font-size:0.76rem; }
+            table.opt-table th, table.opt-table td { padding:6px 7px; }
+            table.opt-table td.opt-k, table.opt-table td.opt-v, table.opt-table td.opt-u,
+            table.opt-table td.opt-h, table.opt-table td.ov-code,
+            table.opt-table td.ov-ver, table.opt-table td.ov-since { width:auto; white-space:nowrap; }
+            table.opt-table td.opt-s { width:auto; white-space:normal; }
+            table.opt-table td.opt-h { font-size:0.72rem; }
+            table.opt-table td.opt-s { font-size:0.72rem; }
+
+            /* ③ 模块 D 输入框：给足最小宽度，数字不被切 */
+            .drv-table input[type="number"] { min-width:86px; padding:6px 6px; }
+
+            /* ④ 角度计算器：结果网格单列、头部可换行、3 列输入栅格单列 */
+            .angle-module .result-grid { grid-template-columns:1fr; }
+            .angle-module .result-card { padding:12px; }
+            .angle-module .am-head { flex-wrap:wrap; }
+            .angle-module .input-grid-3 { grid-template-columns:1fr; }
+            .angle-module .am-sync-row { padding:10px; }
+
+            /* ⑤ 图例 / 点位坐标栏 / 按钮行：允许换行，不再溢出 */
+            .chart-legend { gap:6px 10px; font-size:0.74rem; }
+            .chart-points { gap:6px 10px; font-size:0.74rem; }
+            .opt-row, .two-buttons-row, .file-ops, .inverse-btn-group { flex-wrap:wrap; }
+            .opt-note, .drv-note, .note { font-size:0.78rem; }
+        }
+        @media (max-width:600px) {
+            /* 所有 .opt-table 系列（版本一览 / 定值单读取结果 / 模块 D 反算结果）
+               在手机上 5~6 列必然挤不下 → 统一改为「每条记录一张卡片」：字段名由 data-label 带出，
+               内容竖排，彻底不裁切、不需要横向滑动。 */
+            .opt-table { font-size:0.8rem; }
+            .opt-table thead { display:none; }
+            .opt-table tr { display:block; margin-top:10px; padding:8px 10px; border:1px solid var(--border-color); border-radius:10px; background:var(--soft-bg); }
+            .opt-table tr.opt-group { margin-top:14px; padding:6px 10px; background:rgba(127,127,127,0.12); }
+            .opt-table td { display:block; width:auto !important; max-width:none; border:none !important; padding:3px 0; white-space:normal !important; }
+            .opt-table td::before { content:attr(data-label) '：'; font-weight:700; color:var(--primary-color); margin-right:4px; }
+            .opt-table td:not([data-label])::before { content:none; }
+            .opt-table td.opt-k { font-weight:700; }
+            .opt-table td.opt-k::before { content:none; }
+            .opt-table tr.opt-group td { font-weight:800; }
+            .opt-table tr.opt-group td::before { content:none; }
+            .opt-table td.opt-v { font-size:0.98rem; }
+            .opt-table td.opt-s { margin-top:4px; padding-top:6px; border-top:1px dashed var(--border-color) !important; opacity:0.82; }
+            .opt-table td.opt-miss { color:#c0392b; }
+            .opt-table td.drv-val { font-size:0.92rem; }
+            .opt-table td.drv-val::before { color:var(--text-color); opacity:0.7; }
+            .drv-table input[type="number"] { min-width:0; width:100%; }
+
+            /* 折叠块标题：窄屏不再把标题挤成窄列（原来摘要与标题并排 → 标题竖排 3 行） */
+            details.collapsible > summary { flex-wrap:wrap; align-items:center; row-gap:3px; padding:14px 16px; font-size:1.0rem; line-height:1.4; }
+            details.collapsible > summary .collapse-hint { flex:1 0 100%; margin-left:0; font-size:0.72rem; opacity:0.72; }
+            details.collapsible > summary .collapse-caret { margin-left:auto; }
+            details.collapsible > summary .mod-ver { font-size:0.68rem; margin-left:6px; }
+            .opt-wrap > .opt-wrap-head { font-size:1.05rem; flex-wrap:wrap; row-gap:3px; }
+            .opt-wrap > .opt-wrap-head .collapse-hint { flex:1 0 100%; margin-left:0; font-size:0.72rem; opacity:0.72; }
+            details.collapsible > .collapsible-body { padding:0 12px 14px; }
+            details.collapsible .change-list { margin-left:16px; font-size:0.84rem; }
+        }
+
+        /* ---- 显示组切换 / 特殊显示框 ---- */
+        button.action-btn.hidden-control, .result-box.hidden-control { display:none !important; }
+        .action-display-box { border-left-color:#27ae60 !important; background:var(--display-box-bg) !important; }
+        .instant-display-box { border-left-color:#e67e22 !important; background:var(--instant-box-bg) !important; }
+        .display-group { display:none; }
+        .display-group.active { display:block; }
+        .critical-id-input { width:100%; padding:15px; border:1px solid var(--border-color); border-radius:10px; font-size:1rem; font-weight:600; color:var(--text-color); background:var(--critical-bg); transition:var(--transition); }
+        .critical-id-input:focus { border-color:var(--primary-color); outline:none; box-shadow:0 0 0 3px rgba(26,95,180,0.2); }
+        .connection-select { width:100%; padding:15px; border:1px solid var(--border-color); border-radius:10px; font-size:1rem; font-weight:600; background:var(--input-bg); color:var(--text-color); }
+
+        /* ---- PWA 安装横幅 ---- */
+        .install-banner { display:none; background:#e8f0fe; padding:12px 15px; text-align:center; font-size:0.9rem; color:#1a5fb4; border-bottom:1px solid #d0d9e8; }
+        .install-banner button { background:#1a5fb4; color:white; border:none; padding:6px 16px; border-radius:20px; font-weight:600; cursor:pointer; margin-left:12px; }
+        .install-banner button:hover { background:#154a8c; }
+        @media (display-mode: standalone) { .install-banner { display:none !important; } }
+
+        /* ---- 深色模式（适配手机深色模式）---- */
+        body.dark {
+            --background-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0; --border-color:#3a3a3a;
+            --primary-color:#4a90d9; --secondary-color:#5a9fd8;
+            --soft-bg:#262626; --soft-border:#333333; --input-bg:#2a2a2a; --label-color:#bbbbbb; --unit-color:#888888;
+            --tab-bg:#181818; --tab-btn-bg:#2a2a2a; --result-bg:#1d2b3d; --result-highlight-bg:#3a2e1d;
+            --note-bg:#3a3520; --file-ops-bg:#1a1a1a; --k0-bg:#2a2a2a; --k0-color:#bbbbbb;
+            --solution-bg:#1d2b3d; --chart-bg:#1a1a1a; --display-box-bg:#1d3b2a; --instant-box-bg:#3a2e1d; --critical-bg:#3a2e1d;
+            color-scheme: dark;
+        }
+        body.dark .note b { color:#e0c080; }
+        body.dark .k0-preset:hover { background:#333333; }
+        body.dark .tab-button.active { box-shadow:0 -4px 8px rgba(74,144,217,0.25); }
+    </style>
+</head>
+<body>
+<script>
+    (function () {
+        try {
+            var mq = window.matchMedia('(prefers-color-scheme: dark)');
+            var apply = function () { document.body.classList.toggle('dark', mq.matches); };
+            if (mq.addEventListener) mq.addEventListener('change', apply);
+            else if (mq.addListener) mq.addListener(apply);
+            apply();
+        } catch (e) {}
+    })();
+</script>
+<div class="container">
+
+    <!-- ===== 页头 ===== -->
+    <header>
+        <div class="version-tag">D-3.2.8</div>
+        <h1><i class="fas fa-bolt"></i> 变压器差动保护综合计算</h1>
+    </header>
+
+    <!-- ===== PWA 安装横幅 ===== -->
+    <div class="install-banner" id="installBanner">
+        <i class="fas fa-download"></i> 将此工具安装为应用，获得更佳体验
+        <button id="installBtn">安装</button>
+    </div>
+
+    <!-- ===== 文件操作 ===== -->
+    <div class="file-ops">
+        <button id="export-btn" class="action-btn"><i class="fas fa-file-excel"></i> 导出为Excel（含工况计算）</button>
+        <button id="import-btn" class="action-btn"><i class="fas fa-upload"></i> 导入配置</button>
+        <input type="file" id="import-file" accept="*/*">
+    </div>
+
+    <!-- ===== 更新说明（仅比较当前版本与上一版本） ===== -->
+    <details class="collapsible" id="changelog-module">
+        <summary><i class="fas fa-code-branch"></i> 更新说明 <span class="collapse-hint">D-3.2.8 ← D-3.2.7</span><i class="fas fa-chevron-down collapse-caret"></i></summary>
+        <div class="collapsible-body">
+            <div class="note" style="margin-top:0;">
+                本说明<strong>仅比较「当前版本 D-3.2.8」与「上一版本 D-3.2.7」的差异</strong>，不含更早版本的累积变更。
+            </div>
+            <ul class="change-list">
+                <li><strong>可选模块页改为「外层固定展开 + 内层模块默认折叠」</strong>：整页容器不再折叠，页内各折叠块进入页面时<strong>一律处于收起状态</strong>，先看到模块清单，需要哪个再展开。
+                    <div class="sub">· <strong>外层容器</strong>由 <code>&lt;details&gt;</code> 改为普通容器，标题变为<strong>静态标题栏</strong>（点击不再折叠）——避免和外层形成两级折叠、点错层级。</div>
+                    <div class="sub">· <strong>模块 A 定值单读取 / B 二次电流角度计算器 / C 由试验值反推 ID/IR / D 表显数值反算</strong>：去掉默认 <code>open</code>，展开与否完全由用户点击决定。</div>
+                    <div class="sub">· <strong>「可选模块版本一览」同步改为默认收起</strong>（它同样位于本页内），打开即可查看各模块当前版本与沿革。</div>
+                    <div class="sub">· 各模块的<strong>输入 id、计算链路、跨模块同步、导出字段均未改动</strong>，仅调整容器结构与折叠默认态。</div>
+                </li>
+                <li>本次改动属<strong>页面容器与折叠默认态</strong>，未触及任何模块的计算或数据链路，因此按模块版本管理规则，可选模块 A / B / C / D 的模块版本<strong>均保持不变</strong>（A v1.0 / B v1.0 / C v1.0 / D v1.1）。</li>
+                <li>本「更新说明」内容随版本更新，仍<strong>只保留当前版本与上一版本的差异</strong>。</li>
+            </ul>
+        </div>
+    </details>
+
+    <!-- ===== 标签页导航 ===== -->
+    <div class="tab-buttons">
+        <button class="tab-button active" data-tab="basic"><i class="fas fa-cog"></i> 基本参数</button>
+        <button class="tab-button" data-tab="results"><i class="fas fa-calculator"></i> 基本结果</button>
+        <button class="tab-button" data-tab="protection"><i class="fas fa-shield-alt"></i> 保护参数</button>
+        <button class="tab-button" data-tab="display"><i class="fas fa-desktop"></i> 表显数值</button>
+        <button class="tab-button" data-tab="inverse"><i class="fas fa-exchange-alt"></i> 反推I1/I2</button>
+        <button class="tab-button" data-tab="optional"><i class="fas fa-puzzle-piece"></i> 可选模块</button>
+    </div>
+
+    <!-- ===== 标签页 1：基本参数 ===== -->
+    <div class="tab-content active" id="basic-tab">
+        <div class="category-section">
+            <h2 class="category-title"><i class="fas fa-industry"></i> 互感器基本参数</h2>
+            <div class="input-group input-with-unit"><label for="hv-capacity">高压侧变压器容量 (MVA)</label><input type="number" id="hv-capacity" value="50" min="0.001" step="0.001"><span class="unit">MVA</span></div>
+            <div class="sync-buttons">
+                <select id="sync-side-select"><option value="low" selected>低压侧</option><option value="medium">中压侧</option></select>
+                <button id="sync-capacity-btn"><i class="fas fa-sync-alt"></i> 同步容量</button>
+            </div>
+            <div class="input-group input-with-unit"><label for="lv-capacity" id="lv-capacity-label">低压侧变压器容量 (MVA)</label><input type="number" id="lv-capacity" value="50" min="0.001" step="0.001"><span class="unit">MVA</span></div>
+            <div class="input-group input-with-unit"><label for="hv-voltage">高压侧电压</label><input type="number" id="hv-voltage" value="115" min="1" step="0.1"><span class="unit">kV</span></div>
+            <div class="input-group input-with-unit"><label for="lv-voltage" id="lv-voltage-label">低压侧电压</label><input type="number" id="lv-voltage" value="10.5" min="1" step="0.1"><span class="unit">kV</span></div>
+        </div>
+        <div class="category-section">
+            <h2 class="category-title"><i class="fas fa-bolt"></i> 电流互感器参数</h2>
+            <div class="input-group input-with-unit"><label for="hv-ct-primary">高压侧CT一次值</label><input type="number" id="hv-ct-primary" value="1000" min="1"><span class="unit">A</span></div>
+            <div class="input-group"><label for="hv-ct-secondary">高压侧CT二次值</label><select id="hv-ct-secondary"><option value="1">1A</option><option value="5" selected>5A</option></select></div>
+            <div class="input-group input-with-unit"><label for="lv-ct-primary" id="lv-ct-primary-label">低压侧CT一次值</label><input type="number" id="lv-ct-primary" value="4000" min="1"><span class="unit">A</span></div>
+            <div class="input-group"><label for="lv-ct-secondary" id="lv-ct-secondary-label">低压侧CT二次值</label><select id="lv-ct-secondary"><option value="1">1A</option><option value="5" selected>5A</option></select></div>
+        </div>
+        <div class="note"><strong><i class="fas fa-info-circle"></i> 注意：</strong>所有输入值为正数。修改后请点击"立即计算"。</div>
+        <button id="calculate-basic" class="action-btn"><i class="fas fa-calculator"></i> 立即计算</button>
+    </div>
+
+    <!-- ===== 标签页 2：基本结果 ===== -->
+    <div class="tab-content" id="results-tab">
+        <div class="category-section">
+            <h2 class="category-title"><i class="fas fa-calculator"></i> 变压器基本计算结果</h2>
+            <div class="result-box"><div class="result-title">高压侧CT变比</div><div class="result-value" id="hv-ratio">200</div></div>
+            <div class="result-box"><div class="result-title" id="lv-ratio-title">低压侧CT变比</div><div class="result-value" id="lv-ratio">800</div></div>
+            <div class="result-box"><div class="result-title">高压侧额定电流 (A)</div><div class="result-value" id="hv-current">1.255</div></div>
+            <div class="result-box"><div class="result-title" id="lv-current-title">低压侧额定电流 (A)</div><div class="result-value" id="lv-current">3.437</div></div>
+            <div class="result-box"><div class="result-title">平衡系数（以高压侧为基准）</div><div class="result-value" id="balance-factor">高压侧: 1.000, 低压侧: 0.365</div></div>
+            <div class="result-box"><div class="result-title">平衡系数（以低压侧为基准，Kb2=1）</div><div class="result-value">低压侧: 1.000, 高压侧: <span id="balance-factor-hv-base">2.738</span></div></div>
+        </div>
+    </div>
+
+    <!-- ===== 标签页 3：保护参数 ===== -->
+    <div class="tab-content" id="protection-tab">
+        <div class="category-section">
+            <h2 class="category-title"><i class="fas fa-shield-alt"></i> 差动保护参数 & 动作特性</h2>
+            <div class="input-group">
+                <label>启动斜率 K0：</label>
+                <div class="option-group" id="k0-group">
+                    <button class="k0-preset" data-value="0">0</button>
+                    <button class="k0-preset" data-value="0.2">0.2</button>
+                    <div class="k0-input-wrap">
+                        <input type="number" id="k0-input" value="0" step="0.01" min="0">
+                    </div>
+                </div>
+            </div>
+            <div class="input-group"><label for="icq">启动电流 Icq (Y1)</label><input type="number" id="icq" value="0.4" step="0.01"></div>
+            <div class="input-group"><label for="i1">拐点电流1 I1 (X1)</label><input type="number" id="i1" value="0.5" step="0.01"></div>
+            <div class="input-group"><label for="kbl">比率制动斜率1 Kbl (K2)</label><input type="number" id="kbl" value="0.5" step="0.01"></div>
+            <div class="input-group" id="i2-group"><label for="i2">拐点电流2 I2 (X2)</label><input type="number" id="i2" value="2.0" step="0.01"></div>
+            <div class="input-group" id="kbl2-group"><label for="kbl2">比率制动斜率2 Kbl2 (K3)</label><input type="number" id="kbl2" value="0.7" step="0.01"></div>
+            <div class="input-group"><label for="inst-id">速断电流 I>> (pu)</label><input type="number" id="inst-id" value="0" min="0" step="0.01"></div>
+            <div class="input-group"><label for="ir-input">制动电流 Ir</label><input type="number" id="ir-input" value="1" step="0.01" min="0"></div>
+            <div class="input-group">
+                <label for="critical-id-input">差动电流 ID 值 (pu)</label>
+                <input type="number" id="critical-id-input" class="critical-id-input" value="0" step="0.001" min="0">
+            </div>
+            <div class="two-buttons-row">
+                <button id="critical-state-btn" class="action-btn critical-state-btn"><i class="fas fa-crosshairs"></i> 临界状态</button>
+                <button id="force-draw-btn" class="action-btn force-draw-btn"><i class="fas fa-sync-alt"></i> 强制绘图</button>
+            </div>
+            <div class="note" style="margin-top:0;">绘图已与「临界状态」按钮<strong>解耦</strong>：修改上方任一差动保护参数（含<strong>速断电流 I&gt;&gt;</strong>）即<strong>自动按参数绘制特性图</strong>、同步刷新速断点数据；若图表未自动绘制，点「强制绘图」按当前参数重绘，并向其他界面开放点位坐标。</div>
+            <button id="calc-action-id" class="action-btn action-btn-action hidden-control"><i class="fas fa-bolt"></i> 动作电流</button>
+        </div>
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-chart-line"></i> 比率制动特性</div>
+            <canvas id="brakeCharCanvas"></canvas>
+            <div class="chart-points" id="chart-points"></div>
+            <div class="chart-legend">
+                <div class="legend-item"><span class="legend-color" style="background:#1a5fb4;"></span> 保护特性曲线</div>
+                <div class="legend-item"><span class="legend-color" style="background:#f39c12;"></span> 当前工作点</div>
+                <div class="legend-item"><span class="legend-color" style="background:#3498db;"></span> 拐点1</div>
+                <div class="legend-item"><span class="legend-color" style="background:#9b59b6;"></span> 拐点2</div>
+                <div class="legend-item"><span class="legend-color" style="background:#e67e22;"></span> 速断拐点</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 标签页 4：表显数值 ===== -->
+    <div class="tab-content" id="display-tab">
+        <div class="category-section">
+            <h2 class="category-title"><i class="fas fa-desktop"></i> 表显数值</h2>
+            <div id="critical-display-group" class="display-group active">
+                <div class="result-box"><div class="result-title">当前点差动</div><div class="result-value" id="display-diff">--</div></div>
+                <div class="result-box"><div class="result-title">当前点制动</div><div class="result-value" id="display-brake">--</div></div>
+            </div>
+            <div id="action-display-group" class="display-group">
+                <h2 class="category-title" style="margin-top:0;"><i class="fas fa-bolt" style="color:#27ae60;"></i> 动作点数据</h2>
+                <div class="result-box action-display-box"><div class="result-title action-display-title">动作点差动</div><div class="result-value" id="display-action-diff">--</div></div>
+                <div class="result-box action-display-box"><div class="result-title action-display-title">动作点制动</div><div class="result-value" id="display-action-brake">--</div></div>
+            </div>
+            <div id="instant-display-group" class="display-group">
+                <h2 class="category-title" style="margin-top:0;"><i class="fas fa-bolt" style="color:#e67e22;"></i> 速断点数据</h2>
+                <div class="result-box instant-display-box"><div class="result-title instant-display-title">速断点差动</div><div class="result-value" id="display-instant-diff">--</div></div>
+                <div class="result-box instant-display-box"><div class="result-title instant-display-title">速断点制动</div><div class="result-value" id="display-instant-brake">--</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 标签页 5：ID/IR 反推 I1/I2 ===== -->
+    <div class="tab-content" id="inverse-tab">
+        <div class="category-section">
+            <h2 class="category-title"><i class="fas fa-exchange-alt"></i> ID/IR 反推 I1/I2</h2>
+            <input type="hidden" id="inverse-id" value=""><input type="hidden" id="inverse-ir" value="">
+            <div class="input-group"><label for="idFormula">差动公式 ID：</label><select id="idFormula"><option value="abs(i1+i2)">ID = |I1 + I2|（默认）</option><option value="abs(i1-i2)">ID = |I1 - I2|</option></select></div>
+            <div class="input-group"><label for="irFormula">制动公式 IR：</label><select id="irFormula"><option value="(abs(i1)+abs(i2))/2">IR = (|I1| + |I2|)/2（默认）</option><option value="abs(i1+i2)/2">IR = |I1 + I2|/2</option><option value="abs(i1-i2)/2">IR = |I1 - I2|/2</option></select></div>
+            <div class="input-group">
+                <label for="connection-type">接线方式：</label>
+                <select id="connection-type" class="connection-select">
+                    <option value="star-delta">星转角</option>
+                    <option value="delta-delta">角转星</option>
+                </select>
+            </div>
+        </div>
+        <div class="inverse-btn-group">
+            <button id="calculate-inverse" class="action-btn action-btn-inverse"><i class="fas fa-calculator"></i> 当前点</button>
+            <button id="inverse-action-btn" class="action-btn action-btn-action"><i class="fas fa-bolt"></i> 动作点</button>
+            <button id="instant-inverse-btn" class="action-btn action-btn-instant"><i class="fas fa-bolt"></i> 速断点</button>
+        </div>
+        <div class="category-section" style="margin-top:20px;">
+            <h2 class="category-title"><i class="fas fa-list-ul"></i> 反推结果</h2>
+            <div id="inverse-result" style="line-height:1.6;"></div>
+        </div>
+
+    </div>
+
+    <!-- ===== 标签页 6：可选模块（测试功能） ===== -->
+    <div class="tab-content" id="optional-tab">
+
+        <!-- 整页容器：外层固定展开、不可折叠；折叠只发生在页内各模块 -->
+        <div class="opt-wrap" id="optional-wrap">
+            <div class="opt-wrap-head"><i class="fas fa-puzzle-piece"></i> 可选模块（测试功能） <span class="collapse-hint">独立/试验性功能 · 与主计算流程解耦 · 点标题展开各模块</span></div>
+            <div class="collapsible-body">
+
+                <div class="opt-note">
+                    <strong>⚠️ 使用前请注意：</strong>定值单读取结果为「按名称关键字提取」，写入后<strong>必须与定值单原件、装置说明书逐项核对</strong>；涉及定值修改、压板投退、出口回路变更，须走<strong>审批 → 二次安措 → 定值核对 → 传动/整组试验 → 恢复确认</strong>闭环，本页不得作为现场执行依据。
+                </div>
+                <!-- ===== 可选模块版本一览（D-3.2.5 新增） ===== -->
+                <details class="collapsible" id="opt-version-panel" style="margin-top:18px;">
+                    <summary><i class="fas fa-tags"></i> 可选模块版本一览 <span class="collapse-hint">模块版本独立于主工具版本</span><i class="fas fa-chevron-down collapse-caret"></i></summary>
+                    <div class="collapsible-body">
+                        <div class="note" style="margin-top:0;">
+                            <strong>模块版本管理规则：</strong>每个可选模块有<strong>独立版本号</strong>（<code>vX.Y</code>），与主工具版本（当前 <code id="opt-ver-app">—</code>）<strong>解耦</strong>：<br>
+                            · <strong>模块内容有改动 → 只给该模块 +0.1</strong>，其余模块版本不动；<br>
+                            · <strong>主工具升版但模块未改动 → 模块版本保持不变</strong>；<br>
+                            · 新模块从 <code>v1.0</code> 起算；模块版本号同时显示在各模块标题右侧徽标上。
+                        </div>
+                        <table class="opt-table opt-ver-table">
+                            <thead><tr><th>代号</th><th>模块</th><th>当前版本</th><th>引入版本</th><th>最近变更</th><th>变更要点</th></tr></thead>
+                            <tbody id="opt-ver-body"></tbody>
+                        </table>
+                        <div class="opt-meta" id="opt-ver-summary">—</div>
+                    </div>
+                </details>
+
+                <!-- ===== 可选模块 A：定值单读取 ===== -->                <details class="collapsible" id="setting-reader-module" style="margin-top:25px;">                    <summary><i class="fas fa-file-invoice"></i> 定值单读取<span class="mod-ver" data-mod-ver="A"></span> <span class="collapse-hint">.xls / .xlsx / .csv → 变压器差动定值</span><i class="fas fa-chevron-down collapse-caret"></i></summary>                    <div class="collapsible-body">                        <div class="note" style="margin-top:0;">                            选择一份<strong>保护装置定值单</strong>，自动提取变压器差动的六类参数：<br>                            ①额定容量　②接线方式　③额定电压　④CT 一二次值　⑤速断电流定值　⑥启动电流定值。<br>                            提取采用<strong>定值名称关键字匹配</strong>（不依赖固定行列，可跨工作表），并给出<strong>工作表名 + 单元格地址 + 取值口径</strong>（定值 / 一次值 / 二次值）便于回查原件。                        </div>
+                        <input type="file" id="set-file" accept=".xls,.xlsx,.csv" style="display:none;">                        <div class="opt-row">                            <button id="set-pick-btn" class="action-btn action-btn-inverse"><i class="fas fa-folder-open"></i> 选择定值单文件</button>                            <button id="set-clear-btn" class="action-btn action-btn-inverse"><i class="fas fa-eraser"></i> 清空</button>                        </div>                        <div class="opt-meta" id="set-status">未选择文件。</div>
+                        <div class="opt-sub">第二侧选择</div>                        <div class="note" style="margin-top:0;">                            本工具为<strong>两绕组</strong>模型。三绕组定值单请指定「第二侧」对应哪一侧，写入「基本参数」页时按此取值。                        </div>                        <div class="input-group"><label for="set-second-side">定值单中的「第二侧」对应：</label>                            <select id="set-second-side" class="connection-select">                                <option value="low" selected>低压侧（取低压分支 CT）</option>                                <option value="medium">中压侧</option>                            </select>                        </div>
+                        <div id="set-result"></div>
+                        <div class="opt-row">                            <button id="set-to-basic" class="action-btn action-btn-action"><i class="fas fa-arrow-right"></i> 写入「基本参数」页</button>                            <button id="set-to-protect" class="action-btn action-btn-action"><i class="fas fa-arrow-right"></i> 写入「保护参数」页</button>                        </div>                    </div>                </details>
+                <!-- ===== 可选模块 B：二次电流角度计算器（原 T·v1.0.0 并入） ===== -->                <details class="collapsible" id="angle-module-wrap" style="margin-top:25px;">                    <summary><i class="fas fa-drafting-compass"></i> 二次电流角度计算器<span class="mod-ver" data-mod-ver="B"></span> <span class="collapse-hint">源自独立工具 T · v1.0.0</span><i class="fas fa-chevron-down collapse-caret"></i></summary>                    <div class="collapsible-body">                        <div class="note" style="margin-top:0;">                            <strong>来源：变压器差动二次电流角度计算器 T·v1.0.0（原独立单文件工具）。</strong>算法与原版<strong>完全一致，未作任何修改</strong>，仅界面改为模块化折叠区块、样式作用域隔离。<br>                            「高压侧接线方式」默认为 <strong>Y（星形接线）</strong>；接线方式（钟点数）可由上方<strong>「定值单读取」自动同步</strong>，也可用下方按钮手动重新同步。<br>                            本模块为<strong>测试功能</strong>，其「折算和转角」规则需以<strong>实际装置说明书</strong>为准，使用前请核对厂家定义。                        </div>
+                        <div class="angle-module" id="angle-module">                            <div class="am-head">                                <div>                                    <div class="eyebrow">DIFFERENTIAL VECTOR ANGLE</div>                                    <h2>变压器接线与 CT 二次相位参数</h2>                                    <p class="heading-note">按保护装置说明书中的「折算和转角」方法计算两侧 CT 二次相角。</p>                                </div>                                <span class="version-chip">T · v1.0.0</span>                            </div>
+                            <div class="am-sync-row">                                <button class="btn-ghost" type="button" id="ang-sync-btn"><i class="fas fa-file-import"></i> 从定值单同步接线方式（钟点数）</button>                                <span class="am-sync-status" id="ang-sync-status">尚未从定值单同步。</span>                            </div>
+                            <div class="section-label">变压器接线与相序参数</div>                            <div class="input-grid-3">                                <div class="field">                                    <label for="ang-hy">高压侧接线方式</label>                                    <div class="input-wrap">                                        <select id="ang-hy">                                            <option value="Y" selected>Y（星形接线）</option>                                            <option value="D">Δ（三角形接线）</option>                                        </select>                                    </div>                                </div>                                <div class="field">                                    <label for="ang-hc">高压侧钟点数</label>                                    <div class="input-wrap"><select id="ang-hc"></select></div>                                </div>                                <div class="field">                                    <label for="ang-lc">低压侧钟点数</label>                                    <div class="input-wrap"><select id="ang-lc"></select></div>                                </div>                            </div>
+                            <div class="input-grid-3" style="margin-top:12px;">                                <div class="field">                                    <label for="ang-ha">高压侧 CT 二次 A 相角度</label>                                    <div class="input-wrap">                                        <input id="ang-ha" type="number" step="0.1" value="45">                                        <span class="input-unit">°</span>                                    </div>                                </div>                                <div class="field">                                    <label for="ang-sq">系统相序</label>                                    <div class="input-wrap">                                        <select id="ang-sq">                                            <option value="p" selected>正序 ABC</option>                                            <option value="n">负序 ACB</option>                                        </select>                                    </div>                                </div>                                <div class="field">                                    <label for="ang-rg">相角显示范围</label>                                    <div class="input-wrap">                                        <select id="ang-rg">                                            <option value="360" selected>0° ～ 360°</option>                                            <option value="180">−180° ～ +180°</option>                                        </select>                                    </div>                                </div>                            </div>
+                            <div class="quick-presets">                                <span class="preset-title">高压侧 A 相角预设：</span>                                <button class="preset-btn" type="button" data-ang-preset="0">0°</button>                                <button class="preset-btn" type="button" data-ang-preset="30">30°</button>                                <button class="preset-btn" type="button" data-ang-preset="45">45°</button>                                <button class="preset-btn" type="button" data-ang-preset="60">60°</button>                                <button class="preset-btn" type="button" data-ang-preset="90">90°</button>                                <button class="preset-btn" type="button" data-ang-preset="120">120°</button>                                <button class="preset-btn" type="button" data-ang-preset="180">180°</button>                                <button class="preset-btn" type="button" data-ang-preset="-30">−30°</button>                            </div>
+                            <button id="ang-calc-btn" class="btn" type="button">计算二次电流角度 &nbsp;→</button>
+                            <div id="ang-result"></div>
+                            <div class="am-foot">数据精度：角度精确至 0.1° · 适用于电力系统变压器差动保护通压与校验核算</div>                        </div>                    </div>                </details>
+
+                <!-- ===== 可选模块 C：由试验值反推 ID / IR（由「反推I1/I2」页迁入） ===== -->
+                <details class="collapsible" id="test-idir-module" style="margin-top:25px;">
+                    <summary><i class="fas fa-flask"></i> 由试验值反推 ID / IR<span class="mod-ver" data-mod-ver="C"></span> <span class="collapse-hint">试验值 (A) → ID / IR (pu)</span><i class="fas fa-chevron-down collapse-caret"></i></summary>
+                    <div class="collapsible-body">
+                        <div class="note" style="margin-top:0;margin-bottom:15px;">
+                            <strong>输入现场实际加入的高、低压侧试验电流（二次值 A）</strong>，工具按「反推I1/I2」页当前的<strong>接线方式</strong>与下方<strong>试验类型</strong>折算为标幺电流 I1、I2（内部中间量），再按「反推I1/I2」页所选的<strong>差动公式</strong>与<strong>制动公式</strong>算出<strong>制动电流 IR</strong>与<strong>差动电流 ID</strong>（pu），并与「保护参数」页的当前特性比对给出动作判定。<br>
+                            <span style="opacity:0.8;">（本模块的公式与接线方式取自「反推I1/I2」页的全局选择，两者口径一致。）</span>
+                        </div>
+                        <div class="input-group"><label for="test-type">试验类型：</label>
+                            <select id="test-type" class="connection-select">
+                                <option value="three">三相试验</option>
+                                <option value="two">两相试验（按接线方式折算 √3）</option>
+                            </select>
+                        </div>
+                        <div class="input-group input-with-unit"><label for="test-hv">高压侧试验值</label><input type="number" id="test-hv" value="0" step="0.001"><span class="unit">A</span></div>
+                        <div class="input-group input-with-unit"><label for="test-lv" id="test-lv-label">低压侧试验值</label><input type="number" id="test-lv" value="0" step="0.001"><span class="unit">A</span></div>
+                        <input type="hidden" id="inv-i1" value=""><input type="hidden" id="inv-i2" value="">
+                        <button id="calc-test-idir" class="action-btn action-btn-inverse"><i class="fas fa-calculator"></i> 反推 ID / IR</button>
+                        <div class="two-buttons-row">
+                            <button id="apply-test-point" class="action-btn action-btn-action"><i class="fas fa-crosshairs"></i> 写入「保护参数」页并绘图</button>
+                        </div>
+                        <div id="test-idir-result" style="margin-top:15px;line-height:1.6;"></div>
+                    </div>
+                </details>
+
+                <!-- ===== 可选模块 D：表显数值反算 ===== -->
+                <details class="collapsible" id="display-reverse-module" style="margin-top:25px;">
+                    <summary><i class="fas fa-rotate-left"></i> 表显数值反算<span class="mod-ver" data-mod-ver="D"></span> <span class="collapse-hint">表显 (A) → ID / IR (pu) → 三相 / 两相试验</span><i class="fas fa-chevron-down collapse-caret"></i></summary>
+                    <div class="collapsible-body">
+                        <div class="note" style="margin-top:0;margin-bottom:15px;">
+                            <strong>由「表显数值」页「当前点」的差动 / 制动安培值反算试验加量方案</strong>：先按<strong>高压侧额定二次电流</strong>把表显安培值还原为标幺值 <strong>ID、Ir</strong>，再按「反推I1/I2」页当前所选的<strong>差动公式、制动公式</strong>与<strong>接线方式</strong>反推两侧标幺电流 I1、I2，最后折算为<strong>三相试验</strong>与<strong>两相试验</strong>应加入的二次电流值（A）。<br>
+                            <span style="opacity:0.8;">（与「表显数值」页、「由试验值反推 ID / IR」模块互为逆运算，三者口径一致 —— 公式与接线方式均取自「反推I1/I2」页的全局选择。）</span>
+                        </div>
+
+                        <div class="opt-sub" style="margin-top:6px;">① 表显值输入（可手动修改）</div>
+                        <div class="opt-row" style="margin-top:0;">
+                            <button id="drv-pull-btn" class="action-btn action-btn-inverse"><i class="fas fa-download"></i> 读取「表显数值」页</button>
+                            <button id="drv-calc-btn" class="action-btn action-btn-action"><i class="fas fa-rotate-left"></i> 反算</button>
+                            <button id="drv-clear-btn" class="action-btn action-btn-inverse"><i class="fas fa-eraser"></i> 清空</button>
+                        </div>
+                        <div class="opt-meta" id="drv-status">尚未读取表显数值。</div>
+
+                        <table class="opt-table drv-table">
+                            <thead><tr>
+                                <th style="width:16%;">点位</th>
+                                <th style="width:28%;">差动表显 (A)</th>
+                                <th style="width:28%;">制动表显 (A)</th>
+                                <th style="width:28%;">页内当前值<span style="font-weight:400;opacity:0.75;">（差动 / 制动）</span></th>
+                            </tr></thead>
+                            <tbody>
+                                <tr><td class="opt-k" data-label="点位">当前点</td>
+                                    <td data-label="差动表显 (A)"><input type="number" id="drv-cur-diff" step="0.0001"></td>
+                                    <td data-label="制动表显 (A)"><input type="number" id="drv-cur-brake" step="0.0001"></td>
+                                    <td class="opt-s" data-label="页内当前值（差动 / 制动）" id="drv-cur-page">--</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="drv-note">
+                            注：本模块<strong>只反算「当前点」一个点位</strong>（即「表显数值」页的当前点差动 / 制动）。<br>
+                            ① 该点位在「表显数值」页尚未设定时显示 <code>--</code>，读取时<strong>跳过并保留手动输入的内容</strong>；<br>
+                            ② 差动、制动两项<strong>都填</strong>才会反算，只填一项时提示「须都填写」，不出结果。
+                        </div>
+
+                        <div class="opt-sub">② 反算结果</div>
+                        <div id="drv-result"></div>
+                    </div>
+                </details>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="toast" id="toast">操作成功！</div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ============================================================
+     * 1. 常量配置
+     * ============================================================ */
+    const APP_VERSION = 'D-3.2.8';
+    const SQRT3 = 1.73205080757;
+    const TOAST_DURATION = 3000;      // Toast 显示时长 (ms)
+    const ACTION_ID_OFFSET = 0.5;     // 动作点差动 = 临界ID + 0.5
+    const EPSILON = 1e-9;             // 浮点比较容差
+
+    /* ============================================================
+     * 2. 全局状态（集中管理，替代原散落全局变量）
+     * ============================================================ */
+    const state = {
+        side: 'low',                  // 低压侧 / 中压侧
+        lastCriticalId: null,         // 最近设定的差动电流 ID (pu)
+        lastIr: null,                 // 最近设定的制动电流 Ir (pu)
+        instantaneousId: 0,           // 速断电流 I>> (pu)
+        instantaneousIr: null,        // 速断对应的制动电流 (pu)
+        connectionType: 'star-delta', // 接线方式
+        currentWorkPoint: { ir: 0, id: 0, label: '当前点' },
+        chartPoints: null,            // 最近一次按「差动保护参数」绘制的点位坐标（对外开放）
+        testDerived: null             // 最近一次「由试验值反推」得到的 { id, ir, critId, operate }
+    };
+
+    /* ============================================================
+     * 3. DOM 引用（集中管理）
+     * ============================================================ */
+    const $ = (id) => document.getElementById(id);
+    const els = {
+        criticalIdInput: $('critical-id-input'),
+        irInput: $('ir-input'),
+        k0Input: $('k0-input'),
+        connectionSelect: $('connection-type'),
+        inverseResult: $('inverse-result'),
+        toast: $('toast'),
+        installBanner: $('installBanner'),
+        installBtn: $('installBtn')
+    };
+    const k0Presets = document.querySelectorAll('.k0-preset');
+
+    /* ============================================================
+     * 4. 基础工具函数
+     * ============================================================ */
+    /** 读取数值输入框（失败回退默认值） */
+    function getInputValue(id, def = 0) {
+        const el = $(id);
+        return el ? (parseFloat(el.value) || def) : def;
+    }
+    /** 读取下拉选择框数值 */
+    function getSelectValue(id) {
+        const el = $(id);
+        return el ? parseFloat(el.value) : 5;
+    }
+    /** 设置元素 innerHTML */
+    function setText(id, txt) {
+        const el = $(id);
+        if (el) el.innerHTML = txt;
+    }
+    /** 弹出 Toast 提示 */
+    function showToast(msg) {
+        els.toast.textContent = msg;
+        els.toast.classList.add('show');
+        setTimeout(() => els.toast.classList.remove('show'), TOAST_DURATION);
+    }
+    /** 读取 K0 值（负数视为 0） */
+    function getK0Value() {
+        const val = parseFloat(els.k0Input.value);
+        return (isNaN(val) || val < 0) ? 0 : val;
+    }
+
+    /* ============================================================
+     * 5. 计算引擎（纯函数，与原逻辑逐行一致）
+     * ============================================================ */
+
+    /** 由基本参数推导：CT变比 / 额定电流 / 平衡系数 */
+    function calculateDerived() {
+        const p = {
+            hvCapacity:    getInputValue('hv-capacity', 0),
+            lvCapacity:    getInputValue('lv-capacity', 0),
+            hvVoltage:     getInputValue('hv-voltage', 0),
+            lvVoltage:     getInputValue('lv-voltage', 0),
+            hvCTPrimary:   getInputValue('hv-ct-primary', 0),
+            hvCTSecondary: getSelectValue('hv-ct-secondary'),
+            lvCTPrimary:   getInputValue('lv-ct-primary', 0),
+            lvCTSecondary: getSelectValue('lv-ct-secondary')
+        };
+        const hvRatio = p.hvCTPrimary / p.hvCTSecondary;
+        const lvRatio = p.lvCTPrimary / p.lvCTSecondary;
+        const hvCurrent = (p.hvCapacity * 1000) / (SQRT3 * p.hvVoltage * hvRatio);
+        const lvCurrent = (p.lvCapacity * 1000) / (SQRT3 * p.lvVoltage * lvRatio);
+        const lvBalanceFactor = (p.lvVoltage * lvRatio) / (p.hvVoltage * hvRatio);
+        // 以低压侧为基准（Kb2=1）时的高压侧平衡系数：Kb1 = 低压额定二次 / 高压额定二次
+        const hvBalanceFactorBaseLv = (hvCurrent > 0) ? (lvCurrent / hvCurrent) : 0;
+        return { hvRatio, lvRatio, hvCurrent, lvCurrent, lvBalanceFactor, hvBalanceFactorBaseLv };
+    }
+
+    /** 由制动电流 Ir 求临界差动电流 ID（含速断段） */
+    function computeCriticalIdFromIr(ir) {
+        const k0   = getK0Value();
+        const icq  = parseFloat($('icq').value)  || 0;
+        const i1   = parseFloat($('i1').value)   || 0;
+        const kbl  = parseFloat($('kbl').value)  || 0;
+        const i2   = parseFloat($('i2').value)   || 0;
+        const kbl2 = parseFloat($('kbl2').value) || 0;
+
+        updateInstantaneous();
+
+        let id;
+        if (state.instantaneousId > 0 && state.instantaneousIr !== null && ir >= state.instantaneousIr) {
+            // 速断段：直接取速断电流
+            id = state.instantaneousId;
+        } else if (ir <= i1) {
+            // 第 1 段（0 → I1）：斜率 K0
+            id = icq + k0 * ir;
+        } else if (ir <= i2) {
+            // 第 2 段（I1 → I2）：斜率 Kbl
+            id = icq + k0 * i1 + kbl * (ir - i1);
+        } else {
+            // 第 3 段（> I2）：斜率 Kbl2
+            id = icq + k0 * i1 + kbl * (i2 - i1) + kbl2 * (ir - i2);
+        }
+        return id;
+    }
+
+    /** 由目标差动电流 ID 反推制动电流 Ir（速断段使用） */
+    function calculateReverseIr(idTarget) {
+        const k0   = getK0Value();
+        const icq  = parseFloat($('icq').value)  || 0;
+        const i1   = parseFloat($('i1').value)   || 0;
+        const kbl  = parseFloat($('kbl').value)  || 0;
+        const i2   = parseFloat($('i2').value)   || 0;
+        const kbl2 = parseFloat($('kbl2').value) || 0;
+
+        if (idTarget <= icq) return 0;
+        // 尝试第 1 段
+        if (k0 > 0 && idTarget >= icq) {
+            const ir = (idTarget - icq) / k0;
+            if (ir <= i1) return ir;
+        }
+        // 尝试第 2 段
+        const idAtI1 = icq + k0 * i1;
+        if (kbl > 0 && idTarget >= idAtI1) {
+            const ir = i1 + (idTarget - idAtI1) / kbl;
+            if (ir > i1 && ir <= i2) return ir;
+        }
+        // 尝试第 3 段
+        const idAtI2 = icq + k0 * i1 + kbl * (i2 - i1);
+        if (kbl2 > 0 && idTarget >= idAtI2) {
+            return i2 + (idTarget - idAtI2) / kbl2;
+        }
+        return null;
+    }
+
+    /** 刷新速断状态（读 I>> 输入，计算对应 Ir） */
+    function updateInstantaneous() {
+        const instVal = parseFloat($('inst-id').value) || 0;
+        if (instVal > 0) {
+            state.instantaneousId = instVal;
+            state.instantaneousIr = calculateReverseIr(instVal);
+        } else {
+            state.instantaneousId = 0;
+            state.instantaneousIr = null;
+        }
+    }
+
+    /* ============================================================
+     * 6. 反推计算（ID/IR → I1/I2，6 种公式组合）
+     * ============================================================ */
+
+    /** 执行反推计算，返回 { html } */
+    function performInverseCalculationRaw(id, ir, idFormula, irFormula) {
+        let solutions = [];
+
+        if (idFormula === 'abs(i1+i2)' && irFormula === '(abs(i1)+abs(i2))/2') {
+            if (id > 2 * ir) solutions = ['无解：ID > 2IR'];
+            else {
+                const i1a = ir + id / 2, i2a = ir - id / 2;
+                solutions = [`I1 = ${i1a.toFixed(4)}, I2 = ${i2a.toFixed(4)}`];
+            }
+        } else if (idFormula === 'abs(i1+i2)' && irFormula === 'abs(i1+i2)/2') {
+            if (Math.abs(id - 2 * ir) > EPSILON) solutions = ['无解：ID ≠ 2IR'];
+            else solutions = [`I1 = 任意值，I2 = ${id.toFixed(4)} - I1`];
+        } else if (idFormula === 'abs(i1+i2)' && irFormula === 'abs(i1-i2)/2') {
+            const i1a = (id + 2 * ir) / 2, i2a = (id - 2 * ir) / 2;
+            solutions = [`I1 = ${i1a.toFixed(4)}, I2 = ${i2a.toFixed(4)}`];
+        } else if (idFormula === 'abs(i1-i2)' && irFormula === '(abs(i1)+abs(i2))/2') {
+            if (id > 2 * ir) solutions = ['无解：ID > 2IR'];
+            else {
+                const i1a = ir + id / 2, i2a = ir - id / 2;
+                solutions = [`I1 = ${i1a.toFixed(4)}, I2 = ${i2a.toFixed(4)}`];
+            }
+        } else if (idFormula === 'abs(i1-i2)' && irFormula === 'abs(i1+i2)/2') {
+            const i1a = (2 * ir + id) / 2, i2a = (2 * ir - id) / 2;
+            solutions = [`I1 = ${i1a.toFixed(4)}, I2 = ${i2a.toFixed(4)}`];
+        } else if (idFormula === 'abs(i1-i2)' && irFormula === 'abs(i1-i2)/2') {
+            if (Math.abs(id - 2 * ir) > EPSILON) solutions = ['无解：ID ≠ 2IR'];
+            else solutions = [`I1 = 任意值，I2 = I1 + ${id.toFixed(4)}`];
+        }
+
+        let resultHTML = '';
+        if (solutions[0] && solutions[0].includes('无解')) {
+            resultHTML = `<div style="color:red;">${solutions[0]}</div>`;
+        } else {
+            resultHTML += '<div><strong>标幺值：</strong></div>';
+            resultHTML += `<div class="solution">${solutions[0]}</div>`;
+        }
+
+        // 当解为确定值时，进一步换算三相/两相/分相差动试验值
+        if (solutions.length && !solutions[0].includes('任意值') && !solutions[0].includes('无解')) {
+            const match1 = solutions[0].match(/I1\s*=\s*(-?[\d.]+)/);
+            const match2 = solutions[0].match(/I2\s*=\s*(-?[\d.]+)/);
+            if (match1 && match2) {
+                const i1 = parseFloat(match1[1]);
+                const i2 = parseFloat(match2[1]);
+                const d = calculateDerived();
+                const sideText = state.side === 'low' ? '低压' : '中压';
+                const hvThreePhase = i1 * d.hvCurrent;
+                const lvThreePhase = i2 * d.lvCurrent;
+                let hvTwoPhase, lvTwoPhase;
+                if (state.connectionType === 'star-delta') {
+                    hvTwoPhase = hvThreePhase * SQRT3;
+                    lvTwoPhase = lvThreePhase;
+                } else { // delta-delta（角转星）
+                    hvTwoPhase = hvThreePhase;
+                    lvTwoPhase = lvThreePhase * SQRT3;
+                }
+                const hvDiff = hvThreePhase * SQRT3;
+                let lvDiffComp = 0;
+                let lvDiffValid = true;
+                if (d.lvBalanceFactor !== 0) {
+                    lvDiffComp = (hvDiff / SQRT3) / d.lvBalanceFactor;
+                } else {
+                    lvDiffValid = false;
+                }
+                const lvCurrent = i2 * d.lvCurrent;
+
+                resultHTML += `<div style="margin-top:15px;"><strong>三相试验</strong></div>`;
+                resultHTML += `<div class="solution">高压侧三相试验值 = ${hvThreePhase.toFixed(4)} A</div>`;
+                resultHTML += `<div class="solution">${sideText}侧三相试验值 = ${lvThreePhase.toFixed(4)} A</div>`;
+                resultHTML += `<div style="margin-top:15px;"><strong>两相试验</strong></div>`;
+                resultHTML += `<div class="solution">高压侧两相试验值 = ${hvTwoPhase.toFixed(4)} A</div>`;
+                resultHTML += `<div class="solution">${sideText}侧两相试验值 = ${lvTwoPhase.toFixed(4)} A</div>`;
+
+                // 分相差动（按接线方式区分）
+                resultHTML += `<div style="margin-top:15px;"><strong>分相差动</strong></div>`;
+                if (state.connectionType === 'star-delta') {
+                    resultHTML += `<div class="solution">高压侧分相差动 = ${hvDiff.toFixed(4)} A</div>`;
+                    resultHTML += `<div class="solution">低压侧电流 = ${lvCurrent.toFixed(4)} A</div>`;
+                    if (lvDiffValid) {
+                        resultHTML += `<div class="solution">低压侧补偿电流 = ${lvDiffComp.toFixed(4)} A</div>`;
+                    } else {
+                        resultHTML += `<div class="solution" style="color:#c0392b;">低压侧补偿电流：平衡系数为零，无法计算</div>`;
+                    }
+                } else { // delta-delta（角转星）
+                    const hvSideCurrent = i2 * d.hvCurrent;
+                    const hvCompCurrent = hvSideCurrent;
+                    const lvPhaseCurrent = lvTwoPhase;
+                    resultHTML += `<div class="solution">高压侧电流 = ${hvSideCurrent.toFixed(4)} A</div>`;
+                    resultHTML += `<div class="solution">高压侧补偿电流 = ${hvCompCurrent.toFixed(4)} A</div>`;
+                    resultHTML += `<div class="solution">低压侧分相电流 = ${lvPhaseCurrent.toFixed(4)} A</div>`;
+                }
+            }
+        } else if (solutions.length && !solutions[0].includes('无解')) {
+            resultHTML += `<div style="margin-top:10px; color:#856404;">解含变量，试验值不固定。</div>`;
+        }
+        return { html: resultHTML };
+    }
+
+    /** 渲染反推结果到界面 */
+    function displayInverseForIdIr(idVal, irVal, scenarioLabel = null) {
+        const idFormula = $('idFormula').value;
+        const irFormula = $('irFormula').value;
+        const rawResult = performInverseCalculationRaw(idVal, irVal, idFormula, irFormula);
+        let resultHTML = rawResult.html;
+        if (scenarioLabel) {
+            resultHTML = `<div style="background:#ffe8e8; padding:8px 12px; border-radius:12px; margin-bottom:15px; display:inline-block;"><i class="fas fa-info-circle"></i> 特殊工况：${scenarioLabel}</div>` + resultHTML;
+        }
+        els.inverseResult.innerHTML = resultHTML;
+    }
+
+    function showRegularInverseContainer() {
+        els.inverseResult.style.display = 'block';
+    }
+
+    /* ============================================================
+     * 6b. 试验值（A）→ 标幺电流 I1/I2（隐藏）→ ID / IR
+     * ============================================================ */
+
+    /**
+     * 两侧电流的符号约定——由「差动公式 ID」唯一决定。
+     * D-3.2.0 起已废除独立的「两侧电流相位关系」控件：该关系本就是差动公式的产物，
+     * 差动电流的定义式本身已隐含两侧电流的参考方向：
+     *   ID = |I1 + I2|  → 两侧按差动回路同名端极性接入，穿越性工况下电流反极性，故 I2 取负；
+     *   ID = |I1 - I2|  → 两侧同相叠加接入，I2 取正。
+     * 两种写法在数值上等价（|I1 + (−I2)| ≡ |I1 − I2|），因此不应让用户重复选择。
+     * 制动公式不参与符号判定：若让 IR = |I1−I2|/2 之类去翻转 I2，穿越工况会得出 ID = |I1|+|I2| 这种无意义结果。
+     */
+    const PHASE_BY_ID_FORMULA = {
+        'abs(i1+i2)': 'through',
+        'abs(i1-i2)': 'same'
+    };
+
+    /** 读取当前差动公式对应的两侧电流符号约定（纯函数，无副作用） */
+    function derivedPhaseRelation() {
+        return PHASE_BY_ID_FORMULA[$('idFormula').value] || 'through';
+    }
+
+    /**
+     * 由高/低压侧试验电流（二次值 A）折算标幺电流 I1、I2。
+     * I1、I2 为内部中间量，按要求不对外显示。
+     * 折算基准：各侧额定二次电流（已含平衡系数关系），
+     * 即 I1 = I_HV(A) / 高压侧额定二次电流，I2 = I_LV(A) / 低压侧额定二次电流。
+     * 两相试验按本工具“两相试验”输出的既有约定引入 √3。
+     */
+    function testValuesToPu(hvAmp, lvAmp) {
+        const d = calculateDerived();
+        const testType = $('test-type') ? $('test-type').value : 'three';
+        const rel      = derivedPhaseRelation();   // 两侧电流符号由差动公式决定
+        const conn     = els.connectionSelect.value;
+
+        let hvFactor = 1, lvFactor = 1;
+        if (testType === 'two') {
+            if (conn === 'star-delta') { hvFactor = SQRT3; lvFactor = 1; }
+            else                       { hvFactor = 1;      lvFactor = SQRT3; }
+        }
+        const i1    = (d.hvCurrent > 0) ? (hvAmp / (d.hvCurrent * hvFactor)) : 0;
+        const i2mag = (d.lvCurrent > 0) ? (lvAmp / (d.lvCurrent * lvFactor)) : 0;
+        // 穿越性工况下两侧电流反极性，差动回路看到的是相反方向
+        const i2 = (rel === 'through') ? -i2mag : i2mag;
+        return { i1: i1, i2: i2, rel: rel, hvCurrent: d.hvCurrent, lvCurrent: d.lvCurrent, hvFactor: hvFactor, lvFactor: lvFactor };
+    }
+
+    /** 按所选差动/制动公式，由标幺电流 I1、I2 求（ID, IR） */
+    function computeIdIrFromPu(i1, i2) {
+        const idFormula = $('idFormula').value;
+        const irFormula = $('irFormula').value;
+        const id = (idFormula === 'abs(i1-i2)') ? Math.abs(i1 - i2) : Math.abs(i1 + i2);
+        let ir;
+        if (irFormula === 'abs(i1+i2)/2')           ir = Math.abs(i1 + i2) / 2;
+        else if (irFormula === 'abs(i1-i2)/2')      ir = Math.abs(i1 - i2) / 2;
+        else                                        ir = (Math.abs(i1) + Math.abs(i2)) / 2;
+        return { id: id, ir: ir };
+    }
+
+    /** 由试验值反推 ID / IR 并渲染（I1、I2 写入隐藏字段，不显示） */
+    function calculateTestIdIr() {
+        const box = $('test-idir-result');
+        if (!box) return;
+        const hvAmp = parseFloat($('test-hv').value) || 0;
+        const lvAmp = parseFloat($('test-lv').value) || 0;
+        const pu = testValuesToPu(hvAmp, lvAmp);
+        if (!(pu.hvCurrent > 0) || !(pu.lvCurrent > 0)) {
+            box.innerHTML = '<div style="color:#c0392b;">⚠️ 高压/低压侧额定电流无效（为 0），请先到「基本参数」页检查容量、电压与 CT 参数。</div>';
+            state.testDerived = null;
+            return;
+        }
+        // 反推得到的 I1、I2 —— 按要求隐藏，仅内部保存
+        $('inv-i1').value = pu.i1.toFixed(6);
+        $('inv-i2').value = pu.i2.toFixed(6);
+
+        const r = computeIdIrFromPu(pu.i1, pu.i2);
+        const sideText = state.side === 'low' ? '低压' : '中压';
+        const critId   = computeCriticalIdFromIr(r.ir);
+        let   margin   = r.id - critId;
+        if (Math.abs(margin) < EPSILON) margin = 0;   // 临界点归零，避免浮点尾差误判为「制动」
+        const operate  = margin >= 0;
+        const idA = r.id * pu.hvCurrent, irA = r.ir * pu.hvCurrent;
+
+        const testTypeText = ($('test-type').value === 'two') ? '两相试验（按接线方式折算 √3）' : '三相试验';
+        const signText     = (pu.rel === 'same')
+            ? 'I2 取正（两侧同相叠加接入，对应 ID = |I1 − I2|）'
+            : 'I2 取负（两侧按差动回路同名端极性接入，对应 ID = |I1 + I2|）';
+        const connText     = els.connectionSelect.options[els.connectionSelect.selectedIndex].text;
+        const idFText      = $('idFormula').options[$('idFormula').selectedIndex].text.split('（')[0];
+        const irFText      = $('irFormula').options[$('irFormula').selectedIndex].text.split('（')[0];
+        const inInstant    = (state.instantaneousId > 0 && state.instantaneousIr !== null && r.ir >= state.instantaneousIr);
+
+        let html = '';
+        html += '<div class="result-box"><div class="result-title">制动电流 Ir</div><div class="result-value">' + r.ir.toFixed(4) + ' pu</div></div>';
+        html += '<div class="result-box"><div class="result-title">差动电流 ID</div><div class="result-value">' + r.id.toFixed(4) + ' pu</div></div>';
+        html += '<div class="result-box ' + (operate ? 'action-display-box' : '') + '">'
+              + '<div class="result-title">保护动作判定（按「保护参数」页当前特性）</div>'
+              + '<div class="result-value">' + (operate ? '动作' : '制动')
+              + '（临界 ID = ' + critId.toFixed(4) + ' pu，裕度 ' + (margin >= 0 ? '+' : '') + margin.toFixed(4) + ' pu）</div></div>';
+        html += '<div class="note" style="margin-top:12px;">'
+              + '<div><strong>折算与公式依据</strong>（本工具 ' + APP_VERSION + '）</div>'
+              + '<div>· 试验类型：' + testTypeText + '；接线方式：' + connText + '</div>'
+              + '<div>· 折算基准：高压侧额定二次电流 ' + pu.hvCurrent.toFixed(4) + ' A；' + sideText + '侧额定二次电流 ' + pu.lvCurrent.toFixed(4) + ' A</div>'
+              + '<div>· 折算公式：I1 = 高压侧试验值 ÷ 高压侧额定二次电流' + (pu.hvFactor !== 1 ? ' ÷ √3' : '') + '；'
+              + 'I2 = ' + sideText + '侧试验值 ÷ ' + sideText + '侧额定二次电流' + (pu.lvFactor !== 1 ? ' ÷ √3' : '') + '，正负号见下行</div>'
+              + '<div>· 电流符号：由差动公式唯一决定 —— ' + signText + '</div>'
+              + '<div>· 计算式：' + idFText + '；' + irFText + '</div>'
+              + '<div>· 动作判定：与「保护参数」页当前比率制动特性比对，本点临界 ID = ' + critId.toFixed(4) + ' pu'
+              + (inInstant ? '（Ir 已进入速断段 I>>，按速断定值判定）' : '') + '</div>'
+              + '<div>· 表显参考（以高压侧额定电流 ' + pu.hvCurrent.toFixed(4) + ' A 为基值）：ID = ' + idA.toFixed(4) + ' A，IR = ' + irA.toFixed(4) + ' A</div>'
+              + '</div>';
+
+        state.testDerived = { id: r.id, ir: r.ir, critId: critId, operate: operate };
+        box.innerHTML = html;
+    }
+
+    /** 把反推得到的 ID/IR 写回「保护参数」页并刷新特性图 */
+    function applyTestPointToProtection() {
+        calculateTestIdIr();
+        const t = state.testDerived;
+        if (!t) { showToast('请先反推 ID / IR'); return; }
+        els.irInput.value = t.ir.toFixed(4);
+        els.criticalIdInput.value = t.id.toFixed(4);
+        syncFromInputs();
+        showCriticalDisplay();
+        showToast('已写入保护参数：Ir = ' + t.ir.toFixed(4) + ' pu, ID = ' + t.id.toFixed(4) + ' pu');
+    }
+
+    /* ============================================================
+     * 7. 显示 / 渲染
+     * ============================================================ */
+
+    /** 根据当前 side 更新标签文案 */
+    function updateSideLabels() {
+        const txt = state.side === 'low' ? '低压' : '中压';
+        setText('lv-capacity-label', txt + '侧变压器容量 (MVA)');
+        setText('lv-voltage-label', txt + '侧电压');
+        setText('lv-ct-primary-label', txt + '侧CT一次值');
+        setText('lv-ct-secondary-label', txt + '侧CT二次值');
+        setText('lv-ratio-title', txt + '侧CT变比');
+        setText('lv-current-title', txt + '侧额定电流 (A)');
+        setText('test-lv-label', txt + '侧试验值');
+    }
+
+    /** 更新基本结果展示 */
+    function updateBasicResults() {
+        const d = calculateDerived();
+        const sideText = state.side === 'low' ? '低压' : '中压';
+        setText('hv-ratio', d.hvRatio.toFixed(3));
+        setText('lv-ratio', d.lvRatio.toFixed(3));
+        setText('hv-current', d.hvCurrent.toFixed(3));
+        setText('lv-current', d.lvCurrent.toFixed(3));
+        setText('balance-factor', `高压侧: 1.000, ${sideText}侧: ${d.lvBalanceFactor.toFixed(3)}`);
+        setText('balance-factor-hv-base', d.hvBalanceFactorBaseLv.toFixed(3));
+    }
+
+    /** 同步隐藏的反推字段 */
+    function syncInverseFields() {
+        $('inverse-id').value = state.lastCriticalId !== null ? state.lastCriticalId.toFixed(4) : '';
+        $('inverse-ir').value = state.lastIr !== null ? state.lastIr.toFixed(4) : '';
+    }
+
+    /** 当前点表显数值 */
+    function updateCriticalDisplayValues() {
+        const d = calculateDerived();
+        if (state.lastCriticalId !== null && state.lastIr !== null) {
+            setText('display-diff', (state.lastCriticalId * d.hvCurrent).toFixed(4));
+            setText('display-brake', (state.lastIr * d.hvCurrent).toFixed(4));
+        } else {
+            setText('display-diff', '--');
+            setText('display-brake', '--');
+        }
+    }
+
+    /** 动作点表显数值（差动 = 临界ID + 0.5） */
+    function updateActionDisplayValues() {
+        if (state.lastCriticalId !== null && state.lastIr !== null) {
+            const actionId = state.lastCriticalId + ACTION_ID_OFFSET;
+            const d = calculateDerived();
+            setText('display-action-diff', (actionId * d.hvCurrent).toFixed(4));
+            setText('display-action-brake', (state.lastIr * d.hvCurrent).toFixed(4));
+        } else {
+            setText('display-action-diff', '--');
+            setText('display-action-brake', '--');
+        }
+    }
+
+    /** 速断点表显数值（保持原逻辑对应关系） */
+    function updateInstantDisplayValues() {
+        const d = calculateDerived();
+        if (state.instantaneousId > 0 && state.instantaneousIr !== null) {
+            setText('display-instant-diff', (state.instantaneousIr * d.hvCurrent).toFixed(4));
+            setText('display-instant-brake', (state.instantaneousId * d.hvCurrent).toFixed(4));
+        } else {
+            setText('display-instant-diff', '--');
+            setText('display-instant-brake', '--');
+        }
+    }
+
+    /** 三个显示组切换 */
+    function showCriticalDisplay() {
+        $('critical-display-group').classList.add('active');
+        $('action-display-group').classList.remove('active');
+        $('instant-display-group').classList.remove('active');
+    }
+    function showActionDisplay() {
+        $('critical-display-group').classList.remove('active');
+        $('action-display-group').classList.add('active');
+        $('instant-display-group').classList.remove('active');
+    }
+    function showInstantDisplay() {
+        $('critical-display-group').classList.remove('active');
+        $('action-display-group').classList.remove('active');
+        $('instant-display-group').classList.add('active');
+    }
+
+    /* ============================================================
+     * 8. Canvas 绘图（比率制动特性曲线，逻辑与原版一致）
+     *
+     *    D-3.2.4 起：绘图与「临界状态」按钮彻底解耦
+     *    ① 保护参数变化 / 切换页签 / 窗口缩放 → 自动按参数绘图并刷新速断点；
+     *    ② 「强制绘图」按钮 → 强制按保护参数重绘，并向其他界面开放点位坐标；
+     *    ③ 点位坐标在绘图之前即写入 state.chartPoints，即使 canvas 不可用也已对外开放。
+     * ============================================================ */
+
+    /** 计算特性图几何与点位坐标（纯计算，不触碰 canvas） */
+    function computeChartGeometry() {
+        const k0   = getK0Value();
+        const icq  = parseFloat($('icq').value)  || 0.4;
+        const i1   = parseFloat($('i1').value)   || 0.5;
+        const kbl  = parseFloat($('kbl').value)  || 0.5;
+        const i2   = parseFloat($('i2').value)   || 2.0;
+        const kbl2 = parseFloat($('kbl2').value) || 0.7;
+
+        const idAtI1 = icq + k0 * i1;
+        const idAtI2 = icq + k0 * i1 + kbl * (i2 - i1);
+
+        // 坐标范围
+        const irMaxBound = Math.max(3, state.currentWorkPoint.ir, i1, i2, (state.instantaneousIr || 0));
+        const stepIr = 2;
+        const maxIr = Math.ceil(irMaxBound / 2) * 2;
+        let maxIdRaw = Math.max(2, state.currentWorkPoint.id, icq, idAtI1, idAtI2, state.instantaneousId);
+        if (state.instantaneousIr !== null && state.instantaneousIr <= maxIr) {
+            maxIdRaw = Math.max(maxIdRaw, state.instantaneousId);
+        }
+        const stepId = maxIdRaw > 10 ? 2 : (maxIdRaw > 5 ? 1 : 0.5);
+        const maxId = Math.ceil(maxIdRaw / stepId) * stepId;
+
+        const hasInst = state.instantaneousId > 0 && state.instantaneousIr !== null;
+        const idEnd = icq + k0 * i1 + kbl * (i2 - i1) + kbl2 * (maxIr - i2);
+
+        const points = {
+            source: '差动保护参数',
+            icq: icq, i1: i1, kbl: kbl, i2: i2, kbl2: kbl2,
+            idAtI1: idAtI1, idAtI2: idAtI2, idEnd: idEnd,
+            maxIr: maxIr, maxId: maxId, stepIr: stepIr, stepId: stepId,
+            knee1: { ir: i1, id: idAtI1, label: '拐点1' },
+            knee2: { ir: i2, id: idAtI2, label: '拐点2' },
+            inst: hasInst ? { ir: state.instantaneousIr, id: state.instantaneousId, label: '速断点' } : null,
+            current: { ir: state.currentWorkPoint.ir, id: state.currentWorkPoint.id, label: state.currentWorkPoint.label }
+        };
+        return { k0: k0, icq: icq, i1: i1, kbl: kbl, i2: i2, kbl2: kbl2,
+                 idAtI1: idAtI1, idAtI2: idAtI2, idEnd: idEnd,
+                 maxIr: maxIr, maxId: maxId, stepIr: stepIr, stepId: stepId, hasInst: hasInst,
+                 points: points };
+    }
+
+    /** 登记点位坐标并渲染图下坐标栏（其他界面 / 模块可直接读取 state.chartPoints） */
+    function publishChartPoints(pts) {
+        state.chartPoints = pts;
+        const el = $('chart-points');
+        if (!el) return pts;
+        const f = v => (v === null || v === undefined || !isFinite(v)) ? '--' : Number(v).toFixed(4);
+        const item = (name, o) => '<span class="cp-item"><b>' + name + '</b>' + (o ? f(o.ir) + ', ' + f(o.id) : '--') + '</span>';
+        el.innerHTML = '<span class="cp-tag"><i class="fas fa-crosshairs"></i> 点位坐标 (Ir, ID)</span>'
+            + item('当前点', pts.current)
+            + '<span class="cp-item"><b>速断点</b>' + (pts.inst ? f(pts.inst.ir) + ', ' + f(pts.inst.id) : '--（I>> 未设定）') + '</span>'
+            + item('拐点1', pts.knee1)
+            + item('拐点2', pts.knee2)
+            + '<span class="cp-item cp-note">按「差动保护参数」绘制；供其他模块读取</span>';
+        return pts;
+    }
+
+    function drawBrakeChar() {
+        const geo = computeChartGeometry();
+        publishChartPoints(geo.points);        // 先登记坐标：即使 canvas 不可用，点位坐标也已对外开放
+        try {
+            const isDark = document.body.classList.contains('dark');
+            const CL = isDark ? {grid:'#2a2a2a',axis:'#cccccc',curve:'#4a90d9',knee1:'#5a9fd8',knee2:'#b39ddb',inst:'#e67e22',point:'#f39c12'} : {grid:'#eeeeee',axis:'#333333',curve:'#1a5fb4',knee1:'#3498db',knee2:'#9b59b6',inst:'#e67e22',point:'#f39c12'};
+            const canvas = $('brakeCharCanvas');
+            if (!canvas) return geo.points;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return geo.points;
+            const container = canvas.parentElement;
+            const w = container.clientWidth - 40;
+            const h = 300;
+            canvas.width = (w > 100) ? w : 600;
+            canvas.height = h;
+            if (canvas.width < 200) canvas.width = 200;
+
+            const k0   = geo.k0;
+            const icq  = geo.icq;
+            const i1   = geo.i1;
+            const kbl  = geo.kbl;
+            const i2   = geo.i2;
+            const kbl2 = geo.kbl2;
+            const stepIr = geo.stepIr;
+            const maxIr  = geo.maxIr;
+            const maxId  = geo.maxId;
+            const stepId = geo.stepId;
+            const idAtI1 = geo.idAtI1;
+            const idAtI2 = geo.idAtI2;
+
+            const pad = 40;
+            const gw = canvas.width - pad * 2;
+            const gh = canvas.height - pad * 2;
+            const xScale = gw / maxIr;
+            const yScale = gh / maxId;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 网格
+            ctx.strokeStyle = CL.grid;
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= maxIr; i += stepIr) {
+                const x = pad + i * xScale;
+                ctx.beginPath();
+                ctx.moveTo(x, pad);
+                ctx.lineTo(x, canvas.height - pad);
+                ctx.stroke();
+            }
+            for (let j = 0; j <= maxId; j += stepId) {
+                const y = canvas.height - pad - j * yScale;
+                ctx.beginPath();
+                ctx.moveTo(pad, y);
+                ctx.lineTo(canvas.width - pad, y);
+                ctx.stroke();
+            }
+
+            // 坐标轴
+            ctx.strokeStyle = CL.axis;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pad, pad);
+            ctx.lineTo(pad, canvas.height - pad);
+            ctx.lineTo(canvas.width - pad, canvas.height - pad);
+            ctx.stroke();
+
+            // 轴标签
+            ctx.fillStyle = CL.axis;
+            ctx.font = '12px Arial';
+            ctx.fillText('Ir', canvas.width - pad + 5, canvas.height - pad + 5);
+            ctx.fillText('ID', pad - 20, pad - 10);
+            for (let i = 0; i <= maxIr; i += stepIr) {
+                ctx.fillText(i.toFixed(0), pad + i * xScale - 8, canvas.height - pad + 15);
+            }
+            for (let j = 0; j <= maxId; j += stepId) {
+                ctx.fillText(j.toFixed(stepId < 1 ? 1 : 0), pad - 25, canvas.height - pad - j * yScale + 3);
+            }
+
+            // 保护特性折线
+            ctx.strokeStyle = CL.curve;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(pad, canvas.height - pad - icq * yScale);
+            ctx.lineTo(pad + i1 * xScale, canvas.height - pad - idAtI1 * yScale);
+            ctx.lineTo(pad + i2 * xScale, canvas.height - pad - idAtI2 * yScale);
+            if (state.instantaneousId > 0 && state.instantaneousIr !== null && state.instantaneousIr > 0) {
+                ctx.lineTo(pad + state.instantaneousIr * xScale, canvas.height - pad - state.instantaneousId * yScale);
+                ctx.lineTo(pad + maxIr * xScale, canvas.height - pad - state.instantaneousId * yScale);
+            } else {
+                const idEnd = icq + k0 * i1 + kbl * (i2 - i1) + kbl2 * (maxIr - i2);
+                ctx.lineTo(pad + maxIr * xScale, canvas.height - pad - idEnd * yScale);
+            }
+            ctx.stroke();
+
+            // 拐点标记
+            ctx.fillStyle = CL.knee1;
+            ctx.beginPath();
+            ctx.arc(pad + i1 * xScale, canvas.height - pad - idAtI1 * yScale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = CL.knee2;
+            ctx.beginPath();
+            ctx.arc(pad + i2 * xScale, canvas.height - pad - idAtI2 * yScale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // 速断拐点
+            if (state.instantaneousId > 0 && state.instantaneousIr !== null && state.instantaneousIr >= 0) {
+                ctx.fillStyle = CL.inst;
+                ctx.beginPath();
+                ctx.arc(pad + state.instantaneousIr * xScale, canvas.height - pad - state.instantaneousId * yScale, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.font = 'bold 11px Arial';
+                ctx.fillText('I>>', pad + state.instantaneousIr * xScale + 8, canvas.height - pad - state.instantaneousId * yScale - 5);
+            }
+
+            // 当前工作点
+            if (state.currentWorkPoint.ir >= 0 && state.currentWorkPoint.id >= 0
+                && state.currentWorkPoint.ir <= maxIr && state.currentWorkPoint.id <= maxId) {
+                ctx.fillStyle = CL.point;
+                ctx.beginPath();
+                ctx.arc(pad + state.currentWorkPoint.ir * xScale, canvas.height - pad - state.currentWorkPoint.id * yScale, 7, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.font = 'bold 11px Arial';
+                ctx.fillStyle = CL.point;
+                ctx.fillText(state.currentWorkPoint.label, pad + state.currentWorkPoint.ir * xScale + 10, canvas.height - pad - state.currentWorkPoint.id * yScale - 5);
+            }
+        } catch (e) {
+            console.warn(e);
+        }
+        return geo.points;
+    }
+
+    /** 与绘图解耦的刷新入口：按「差动保护参数」重算速断点、刷新表显值并重绘特性图。
+     *  force=true 时同时按当前 Ir 重算临界 ID（参数变更 / 强制绘图时保持一致）。
+     *  返回值：本工具对外开放的点位坐标对象。 */
+    function refreshChartFromParams(force) {
+        updateInstantaneous();                 // 读「速断电流 I>>」→ 速断点 ID / Ir（原先只在点「临界状态」时才刷新）
+        if (force && state.lastIr !== null && state.lastIr !== undefined) {
+            const newId = computeCriticalIdFromIr(state.lastIr);
+            if (isFinite(newId) && newId >= 0) els.criticalIdInput.value = newId.toFixed(4);
+        }
+        syncFromInputs();                      // 表显数值三组 + 当前点 + 绘图（含 publishChartPoints）
+        if (typeof DisplayReverseModule !== 'undefined') DisplayReverseModule.recalcIfReady();
+        return state.chartPoints;
+    }
+
+    /** 强制绘图：按「差动保护参数」强制重绘特性图并开放点位坐标（自动绘图未生效时兜底） */
+    function forceDrawChart() {
+        const p = refreshChartFromParams(true);
+        const f = v => (v === null || v === undefined || !isFinite(v)) ? '--' : Number(v).toFixed(4);
+        const instTxt = (p && p.inst) ? '(' + f(p.inst.ir) + ', ' + f(p.inst.id) + ')' : 'I>> 未设定';
+        showToast('已按「差动保护参数」强制绘图；速断点 ' + instTxt + '，点位坐标已向其他界面开放');
+    }
+
+    /** 差动保护参数任一变化：自动重算临界 ID / 速断点、刷新表显值并重绘（不再需要点「临界状态」） */
+    function onProtectionParamInput() { refreshChartFromParams(true); }
+
+    /* ============================================================
+     * 9. 业务交互（状态同步与各类按钮动作）
+     * ============================================================ */
+
+    /** 由输入框同步整体状态并重绘 */
+    function syncFromInputs() {
+        const id = parseFloat(els.criticalIdInput.value) || 0;
+        const ir = parseFloat(els.irInput.value) || 0;
+        state.lastCriticalId = id;
+        state.lastIr = ir;
+        syncInverseFields();
+        updateCriticalDisplayValues();
+        updateActionDisplayValues();
+        updateInstantDisplayValues();
+        state.currentWorkPoint = { ir: ir, id: id, label: '当前点' };
+        drawBrakeChar();
+    }
+
+    /** ID 输入变化 */
+    function onCriticalIdInput() { syncFromInputs(); }
+
+    /** Ir 输入变化 */
+    function onIrInput() { syncFromInputs(); }
+
+    /** K0 变化：联动刷新临界 ID 与预设按钮高亮 */
+    function onK0Input() {
+        if (state.lastIr !== null && state.lastIr !== undefined) {
+            const newId = computeCriticalIdFromIr(state.lastIr);
+            els.criticalIdInput.value = newId.toFixed(4);
+            syncFromInputs();
+            k0Presets.forEach(btn => {
+                const btnVal = parseFloat(btn.dataset.value);
+                if (!isNaN(btnVal) && Math.abs(btnVal - parseFloat(els.k0Input.value)) < 0.001) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    /** K0 预设按钮点击 */
+    function setK0Preset(e) {
+        const val = e.target.dataset.value;
+        els.k0Input.value = val;
+        k0Presets.forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        onK0Input();
+    }
+
+    /** 接线方式切换 */
+    function onConnectionChange() {
+        state.connectionType = els.connectionSelect.value;
+        if (state.lastCriticalId !== null && state.lastIr !== null) {
+            showRegularInverseContainer();
+            displayInverseForIdIr(state.lastCriticalId, state.lastIr, null);
+            showCriticalDisplay();
+            state.currentWorkPoint = { ir: state.lastIr, id: state.lastCriticalId, label: '当前点' };
+            drawBrakeChar();
+            showToast('接线方式已切换，已刷新当前点反推结果');
+        } else {
+            showToast('接线方式已切换');
+        }
+        // 接线方式同时影响试验值折算，同步刷新正推结果
+        if ($('test-idir-result')) calculateTestIdIr();
+        // 两相试验的 √3 折算侧随接线方式变化，表显反算结果同步刷新
+        DisplayReverseModule.recalcIfReady();
+    }
+
+    /** 同步容量到低压/中压侧 */
+    function syncCapacity() {
+        const hv = $('hv-capacity').value;
+        if (hv === '' || isNaN(parseFloat(hv))) {
+            showToast('请输入有效的高压侧容量');
+            return;
+        }
+        $('lv-capacity').value = hv;
+        state.side = $('sync-side-select').value;
+        updateSideLabels();
+        updateBasicResults();
+        showToast('已同步至' + (state.side === 'low' ? '低压' : '中压') + '侧');
+    }
+
+    /** 临界状态：由 Ir 计算临界 ID（绘图职责已剥离，绘图由「差动保护参数」自动维护 / 「强制绘图」兜底） */
+    function setCriticalState() {
+        const ir = parseFloat(els.irInput.value) || 0;
+        if (ir < 0) { showToast('请输入有效的制动电流 Ir'); return; }
+        const id = computeCriticalIdFromIr(ir);
+        if (isNaN(id) || id < 0) { showToast('计算临界ID失败，请检查参数'); return; }
+        els.criticalIdInput.value = id.toFixed(4);
+        syncFromInputs();
+        showToast(`临界状态已设置：ID = ${id.toFixed(4)}, Ir = ${ir.toFixed(4)}（绘图无需此按钮）`);
+    }
+
+    /** 反推：当前点 */
+    function calculateInverse() {
+        if (state.lastCriticalId === null) {
+            els.inverseResult.innerHTML = '<div style="color:red;">⚠️ 请先设定差动电流ID（手动输入或点击"临界状态"）</div>';
+            return;
+        }
+        showRegularInverseContainer();
+        displayInverseForIdIr(state.lastCriticalId, state.lastIr, null);
+        showCriticalDisplay();
+        state.currentWorkPoint = { ir: state.lastIr, id: state.lastCriticalId, label: '当前点' };
+        drawBrakeChar();
+        showToast('已切换至当前点工作点');
+    }
+
+    /** 反推：动作点（ID + 0.5） */
+    function calculateActionInverse() {
+        if (state.lastCriticalId === null) {
+            els.inverseResult.innerHTML = '<div style="color:red;">⚠️ 请先设定差动电流ID</div>';
+            return;
+        }
+        const actionId = state.lastCriticalId + ACTION_ID_OFFSET;
+        showRegularInverseContainer();
+        displayInverseForIdIr(actionId, state.lastIr, '动作电流 (当前点ID+0.5)');
+        updateActionDisplayValues();
+        showActionDisplay();
+        state.currentWorkPoint = { ir: state.lastIr, id: actionId, label: '动作点' };
+        drawBrakeChar();
+        showToast('已切换至动作点工作点');
+    }
+
+    /** 反推：速断点 */
+    function calculateInstantInverse() {
+        if (state.instantaneousId === 0) {
+            els.inverseResult.innerHTML = '<div style="color:red;">⚠️ 请先在保护参数页设置速断电流 I>> (pu)</div>';
+            return;
+        }
+        if (state.instantaneousIr === null) {
+            els.inverseResult.innerHTML = '<div style="color:red;">⚠️ 无法反推速断制动电流</div>';
+            return;
+        }
+        showRegularInverseContainer();
+        displayInverseForIdIr(state.instantaneousId, state.instantaneousIr, '速断电流 I>> 工况');
+        updateInstantDisplayValues();
+        showInstantDisplay();
+        if (state.instantaneousId > 0 && state.instantaneousIr !== null) {
+            state.currentWorkPoint = { ir: state.instantaneousIr, id: state.instantaneousId, label: '速断点' };
+            drawBrakeChar();
+        }
+        showToast('已切换至速断点工作点');
+    }
+
+    /* ============================================================
+     * 10. Excel 导出 / 配置导入
+     * ============================================================ */
+
+    /** 导出 Excel（逻辑与原版完全一致） */
+    function exportToExcel() {
+        try {
+            updateBasicResults();
+            const derived = calculateDerived();
+            const sideText = state.side === 'low' ? '低压侧' : '中压侧';
+            const currentIr = parseFloat(els.irInput.value) || 0;
+
+            const allData = [];
+            allData.push(['变压器差动保护配置及工况计算报告']);
+            allData.push(['版本号', APP_VERSION]);
+            allData.push([]);
+            allData.push(['=== 基本信息 ===']);
+            allData.push(['参数名称', '参数值', '单位']);
+            allData.push(['高压侧变压器容量', $('hv-capacity').value, 'MVA']);
+            allData.push(['低压侧变压器容量', $('lv-capacity').value, 'MVA']);
+            allData.push(['高压侧电压', $('hv-voltage').value, 'kV']);
+            allData.push(['低压侧电压', $('lv-voltage').value, 'kV']);
+            allData.push(['高压侧CT一次值', $('hv-ct-primary').value, 'A']);
+            allData.push(['高压侧CT二次值', $('hv-ct-secondary').value, 'A']);
+            allData.push(['低压侧CT一次值', $('lv-ct-primary').value, 'A']);
+            allData.push(['低压侧CT二次值', $('lv-ct-secondary').value, 'A']);
+            allData.push([]);
+            allData.push(['=== 保护参数 ===']);
+            allData.push(['参数名称', '参数值', '单位']);
+            allData.push(['启动斜率K0', parseFloat(els.k0Input.value).toFixed(4) || '0.0000', '']);
+            allData.push(['启动电流Icq', parseFloat($('icq').value).toFixed(4), 'pu']);
+            allData.push(['拐点电流1 I1', parseFloat($('i1').value).toFixed(4), 'pu']);
+            allData.push(['比率制动斜率1 Kbl', parseFloat($('kbl').value).toFixed(4), '']);
+            allData.push(['拐点电流2 I2', parseFloat($('i2').value).toFixed(4), 'pu']);
+            allData.push(['比率制动斜率2 Kbl2', parseFloat($('kbl2').value).toFixed(4), '']);
+            allData.push(['速断电流I>>', parseFloat($('inst-id').value).toFixed(4), 'pu']);
+            allData.push(['制动电流Ir', currentIr.toFixed(4), 'pu']);
+            allData.push(['差动电流ID', parseFloat(els.criticalIdInput.value).toFixed(4) || '0.0000', 'pu']);
+            allData.push(['接线方式', els.connectionSelect.options[els.connectionSelect.selectedIndex].text, '']);
+            allData.push([]);
+            allData.push(['=== 基础计算结果 ===']);
+            allData.push(['参数名称', '参数值', '单位']);
+            allData.push(['高压侧CT变比', derived.hvRatio.toFixed(3), '']);
+            allData.push(['低压侧CT变比', derived.lvRatio.toFixed(3), '']);
+            allData.push(['高压侧额定电流', derived.hvCurrent.toFixed(4), 'A']);
+            allData.push(['低压侧额定电流', derived.lvCurrent.toFixed(4), 'A']);
+            allData.push(['平衡系数', `高压侧: 1.000, ${sideText}: ${derived.lvBalanceFactor.toFixed(4)}`, '']);
+
+            // === 试验值反推 ID/IR ===
+            const testHv = parseFloat($('test-hv').value) || 0;
+            const testLv = parseFloat($('test-lv').value) || 0;
+            const puT = testValuesToPu(testHv, testLv);
+            const tRes = computeIdIrFromPu(puT.i1, puT.i2);
+            allData.push([]);
+            allData.push(['=== 试验值反推 ID/IR ===']);
+            allData.push(['参数名称', '参数值', '单位']);
+            allData.push(['试验类型', $('test-type').options[$('test-type').selectedIndex].text, '']);
+            allData.push(['高压侧试验值', testHv.toFixed(4), 'A']);
+            allData.push([sideText + '侧试验值', testLv.toFixed(4), 'A']);
+            allData.push(['差动公式 ID', $('idFormula').options[$('idFormula').selectedIndex].text.split('（')[0], '']);
+            allData.push(['制动公式 IR', $('irFormula').options[$('irFormula').selectedIndex].text.split('（')[0], '']);
+            allData.push(['两侧电流符号（由差动公式决定）', (puT.rel === 'same' ? 'I2 取正' : 'I2 取负'), '']);
+            allData.push(['制动电流 IR', tRes.ir.toFixed(4), 'pu']);
+            allData.push(['差动电流 ID', tRes.id.toFixed(4), 'pu']);
+            allData.push(['动作判定', (tRes.id - computeCriticalIdFromIr(tRes.ir) >= -EPSILON ? '动作' : '制动'),
+                          '临界ID ' + computeCriticalIdFromIr(tRes.ir).toFixed(4) + ' pu']);
+
+            const ws = XLSX.utils.aoa_to_sheet(allData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '变压器保护配置');
+            ws['!cols'] = [{ wch: 22 }, { wch: 20 }, { wch: 12 }];
+
+            const defaultFileName = `变压器差动保护配置_${APP_VERSION}_${new Date().toISOString().slice(0, 10)}`;
+            let userFileName = prompt('请输入导出文件名（无需添加扩展名）:', defaultFileName);
+            if (userFileName === null) {
+                showToast('已取消导出');
+                return;
+            }
+            userFileName = userFileName.trim();
+            if (userFileName === '') userFileName = defaultFileName;
+            const finalFileName = userFileName.endsWith('.xlsx') ? userFileName : userFileName + '.xlsx';
+            if (typeof cordova !== 'undefined' && window.resolveLocalFileSystemURL) {
+                // Cordova/APK：写入手机存储 Download 目录
+                try {
+                    const data = XLSX.write(wb, { type: 'array' });
+                    const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    window.resolveLocalFileSystemURL(cordova.file.externalRootDirectory + 'Download/', function (dir) {
+                        dir.getFile(finalFileName, { create: true }, function (fileEntry) {
+                            fileEntry.createWriter(function (writer) {
+                                writer.onwriteend = function () { showToast('已保存到 手机存储/Download/' + finalFileName); };
+                                writer.onerror = function () { showToast('导出失败：写入错误'); };
+                                writer.write(blob);
+                            }, function () { showToast('导出失败：无法创建文件'); });
+                        }, function () { showToast('导出失败：无法访问 Download 目录'); });
+                    }, function () { showToast('导出失败：无法访问外部存储'); });
+                } catch (e) { showToast('导出失败：' + e.message); }
+            } else {
+                XLSX.writeFile(wb, finalFileName);
+                showToast('Excel导出成功，文件名：' + finalFileName);
+            }
+        } catch (error) {
+            console.error(error);
+            showToast('导出失败：' + error.message);
+        }
+    }
+
+    /** 导入配置（支持 JSON / XLSX） */
+    function importConfig(file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const fileType = file.name.split('.').pop().toLowerCase();
+                let config = {};
+                if (fileType === 'json') {
+                    config = JSON.parse(e.target.result);
+                    fillFormFromJSON(config);
+                } else if (fileType === 'xlsx') {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    fillFormFromXLSX(workbook);
+                } else {
+                    throw new Error('不支持的文件格式');
+                }
+                state.connectionType = els.connectionSelect.value;
+                if (state.lastCriticalId !== null && state.lastIr !== null) {
+                    onConnectionChange();
+                }
+                updateSideLabels();
+                updateBasicResults();
+                const id = parseFloat(els.criticalIdInput.value) || 0;
+                const ir = parseFloat(els.irInput.value) || 0;
+                state.lastCriticalId = id;
+                state.lastIr = ir;
+                syncFromInputs();
+                k0Presets.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (Math.abs(parseFloat(btn.dataset.value) - parseFloat(els.k0Input.value)) < 0.001) {
+                        btn.classList.add('active');
+                    }
+                });
+                showToast(`${fileType.toUpperCase()}配置导入成功`);
+            } catch (err) {
+                showToast('导入失败：' + err.message);
+            }
+        };
+        if (file.name.endsWith('.xlsx')) reader.readAsArrayBuffer(file);
+        else reader.readAsText(file);
+    }
+
+    /** 从 JSON 填充表单 */
+    function fillFormFromJSON(config) {
+        if (!config.basic || !config.protection || !config.inverse) throw new Error('无效的JSON');
+        $('hv-capacity').value = config.basic.hvCapacity || 50;
+        $('lv-capacity').value = config.basic.lvCapacity || 50;
+        $('hv-voltage').value = config.basic.hvVoltage || 115;
+        $('lv-voltage').value = config.basic.lvVoltage || 10.5;
+        $('hv-ct-primary').value = config.basic.hvCtPrimary || 1000;
+        $('hv-ct-secondary').value = config.basic.hvCtSecondary || 5;
+        $('lv-ct-primary').value = config.basic.lvCtPrimary || 4000;
+        $('lv-ct-secondary').value = config.basic.lvCtSecondary || 5;
+        state.side = config.basic.syncSide || 'low';
+        $('sync-side-select').value = state.side;
+        if (config.protection.k0 !== undefined) { els.k0Input.value = config.protection.k0; }
+        $('icq').value = config.protection.icq || 0.4;
+        $('i1').value = config.protection.i1 || 0.5;
+        $('kbl').value = config.protection.kbl || 0.5;
+        $('i2').value = config.protection.i2 || 2.0;
+        $('kbl2').value = config.protection.kbl2 || 0.7;
+        $('inst-id').value = config.protection.instId || 0;
+        els.irInput.value = config.protection.irInput || 1;
+        els.criticalIdInput.value = config.protection.criticalId || 0;
+
+        if (config.protection.connectionType) {
+            const val = config.protection.connectionType;
+            let matched = false;
+            for (let i = 0; i < els.connectionSelect.options.length; i++) {
+                if (els.connectionSelect.options[i].value === val || els.connectionSelect.options[i].text === val) {
+                    els.connectionSelect.selectedIndex = i;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) els.connectionSelect.value = 'star-delta';
+            state.connectionType = els.connectionSelect.value;
+        }
+        const idSel = $('idFormula'), irSel = $('irFormula');
+        for (let i = 0; i < idSel.options.length; i++) if (idSel.options[i].value === config.inverse.idFormula) idSel.selectedIndex = i;
+        for (let i = 0; i < irSel.options.length; i++) if (irSel.options[i].value === config.inverse.irFormula) irSel.selectedIndex = i;
+        // 新增：试验值块（旧版配置无这些字段，存在才恢复）
+        if (config.inverse.testType && $('test-type')) $('test-type').value = config.inverse.testType;
+        // 相位关系不再导入：它由差动公式派生（旧配置里的 phaseRelation 字段忽略）
+        if (config.inverse.hvTest !== undefined && $('test-hv')) $('test-hv').value = config.inverse.hvTest;
+        if (config.inverse.lvTest !== undefined && $('test-lv')) $('test-lv').value = config.inverse.lvTest;
+        onK0Input();
+    }
+
+    /** 从 XLSX 填充表单 */
+    function fillFormFromXLSX(workbook) {
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const map = {
+            '高压侧变压器容量': 'hv-capacity', '低压侧变压器容量': 'lv-capacity',
+            '高压侧电压': 'hv-voltage', '低压侧电压': 'lv-voltage',
+            '高压侧CT一次值': 'hv-ct-primary', '高压侧CT二次值': 'hv-ct-secondary',
+            '低压侧CT一次值': 'lv-ct-primary', '低压侧CT二次值': 'lv-ct-secondary',
+            '同步容量': 'sync-side-select',
+            '启动斜率K0': 'k0-input', '启动电流Icq': 'icq',
+            '拐点电流1 I1': 'i1', '比率制动斜率1 Kbl': 'kbl',
+            '拐点电流2 I2': 'i2', '比率制动斜率2 Kbl2': 'kbl2',
+            '速断电流I>>': 'inst-id', '制动电流Ir': 'ir-input',
+            '差动电流ID': 'critical-id-input',
+            '差动公式': 'idFormula', '制动公式': 'irFormula',
+            '接线方式': 'connection-type',
+            '试验类型': 'test-type',
+            '高压侧试验值': 'test-hv', '低压侧试验值': 'test-lv', '中压侧试验值': 'test-lv'
+        };
+        data.forEach(row => {
+            if (!row || row.length < 2) return;
+            const name = row[0], val = row[1];
+            const id = map[name];
+            if (!id) return;
+            const el = $(id);
+            if (!el) return;
+            if (id === 'k0-input') {
+                el.value = val;
+            } else if (id === 'connection-type') {
+                let matched = false;
+                for (let i = 0; i < el.options.length; i++) {
+                    if (el.options[i].value === val || el.options[i].text === val) {
+                        el.selectedIndex = i;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) el.value = 'star-delta';
+                state.connectionType = el.value;
+            } else if (id === 'sync-side-select') {
+                el.value = (val === '低压侧' ? 'low' : (val === '中压侧' ? 'medium' : val));
+                state.side = el.value;
+            } else if (id === 'idFormula' || id === 'irFormula' || id === 'test-type') {
+                for (let i = 0; i < el.options.length; i++) if (el.options[i].value === val || el.options[i].text === val) el.selectedIndex = i;
+            } else {
+                el.value = val;
+            }
+        });
+        onK0Input();
+    }
+
+    /* ============================================================
+     * 10b. 可选模块 A：二次电流角度计算器（原 T·v1.0.0 并入）
+     *      —— 算法与原独立工具完全一致，未作修改；仅收进独立命名空间并改用 ang-* 前缀 ID。
+     * ============================================================ */
+    const AngleModule = (function () {
+        const g = function (id) { return document.getElementById(id); };
+        const norm360 = function (x) { return ((x % 360) + 360) % 360; };
+        const signed180 = function (x) { x = norm360(x); return x > 180 ? x - 360 : x; };
+        const fmtDeg = function (x) { return Number(x.toFixed(1)) + '°'; };
+
+        /** 低压侧接线型式：由高压侧型式与相对钟点数推导（原版 lowType 逻辑） */
+        function lowType(rel) {
+            const h = g('ang-hy').value;
+            return h === 'D' ? (rel % 2 ? 'Y' : 'D') : (rel % 2 ? 'D' : 'Y');
+        }
+        /** 转角量（原版 turn 逻辑） */
+        function turn(t, seq, rel) {
+            if (t === 'Y') return seq === 'p' ? 30 : -30;
+            return rel === 1 ? 180 : 0;
+        }
+
+        function fillClocks() {
+            const fill = function (id) {
+                const sel = g(id);
+                if (!sel) return;
+                sel.innerHTML = '';
+                for (let i = 0; i < 12; i++) {
+                    const o = document.createElement('option');
+                    o.value = String(i);
+                    o.textContent = (i === 0 ? '0（12点）' : i + '点');
+                    sel.appendChild(o);
+                }
+            };
+            fill('ang-hc');
+            fill('ang-lc');
+        }
+
+        /** 纯计算：返回本次全部中间量，便于独立复核 */
+        function compute() {
+            const h = parseFloat(g('ang-ha').value) || 0;
+            const hn = parseInt(g('ang-hc').value, 10) || 0;
+            const ln = parseInt(g('ang-lc').value, 10) || 0;
+            const seq = g('ang-sq').value;
+            const rel = ((ln - hn) % 12 + 12) % 12;
+            const ht = g('ang-hy').value;
+            const lt = lowType(rel);
+            const hd = turn(ht, seq, rel);
+            const ld = turn(lt, seq, rel);
+            const low = signed180(h + hd + 180 - ld);
+            return { h: h, hn: hn, ln: ln, seq: seq, rel: rel, ht: ht, lt: lt, hd: hd, ld: ld, low: low };
+        }
+
+        function render() {
+            const box = g('ang-result');
+            if (!box) return;
+            const r = compute();
+            const rg = g('ang-rg').value;
+            const show = function (x) { return fmtDeg(rg === '360' ? norm360(x) : signed180(x)); };
+            const a = r.low;
+            const b = r.seq === 'p' ? a - 120 : a + 120;
+            const c = r.seq === 'p' ? a + 120 : a - 120;
+            const tip = (r.rel === 1 || r.rel === 11 || r.rel === 0)
+                ? ''
+                : '（说明书常用整定为1点、11点、12点，当前组合请核对厂家定义）';
+
+            let html = '';
+            html += '<div class="result-card">';
+            html += '<div class="result-top"><span class="am-rt">计算结果与矢量比较</span><span class="formula-chip">两侧通过性电流相差 180°</span></div>';
+            html += '<div class="result-grid">';
+            html += '<div class="metric highlight"><div class="metric-label">低压侧 CT 二次 A 相角度</div><div class="metric-value">' + show(a) + '</div></div>';
+            html += '<div class="metric"><div class="metric-label">相对钟点数</div><div class="metric-value">' + (r.rel || 12) + '<small>点</small></div></div>';
+            html += '<div class="metric"><div class="metric-label">两侧接线方式</div><div class="metric-value" style="font-size:0.95rem;margin-top:8px;">高压侧: <b>' + r.ht + '</b> &nbsp;|&nbsp; 低压侧: <b>' + r.lt + '</b></div></div>';
+            html += '</div>';
+            html += '<table class="param-table"><thead><tr><th>相别</th><th>高压侧 CT 二次相角</th><th>低压侧 CT 二次相角</th></tr></thead><tbody>';
+            html += '<tr><td>A 相</td><td>' + show(r.h) + '</td><td>' + show(a) + '</td></tr>';
+            html += '<tr><td>B 相</td><td>' + show(r.seq === 'p' ? r.h - 120 : r.h + 120) + '</td><td>' + show(b) + '</td></tr>';
+            html += '<tr><td>C 相</td><td>' + show(r.seq === 'p' ? r.h + 120 : r.h - 120) + '</td><td>' + show(c) + '</td></tr>';
+            html += '</tbody></table>';
+            html += '<div class="formula-box"><strong>转角与相位计算公式</strong>';
+            html += '<div class="formula">高压侧转角：' + fmtDeg(r.hd) + ' &nbsp;|&nbsp; 低压侧转角：' + fmtDeg(r.ld) + ' &nbsp;|&nbsp; 转角后两侧相位互补 180°</div>';
+            html += '<p class="formula-note">按保护装置说明书中的「折算和转角」规则算得。</p></div>';
+            if (tip) html += '<div class="info-box"><b>提示：</b>' + tip + '</div>';
+            html += '</div>';
+            box.innerHTML = html;
+        }
+
+        /* ---------- 接线方式（钟点数）：与「定值单读取」同步 ---------- */
+        /**
+         * 钟点数归一：12 点记作 0；仅接受 0~12 的整数，其余返回 null（不猜）。
+         * 定值单中的「高压侧接线方式」按钟点数解读（0 即 0 点 / 12 点），
+         * 与「中压侧接线方式钟点数」「低压侧接线方式钟点数」同单位。
+         */
+        function normClock(v) {
+            if (v === null || v === undefined || v === '') return null;
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 0 || n > 12) return null;
+            return n % 12;
+        }
+
+        function setSyncStatus(html, cls) {
+            const el = g('ang-sync-status');
+            if (!el) return;
+            el.innerHTML = html;
+            el.className = 'am-sync-status' + (cls ? ' ' + cls : '');
+        }
+
+        /**
+         * 由定值单读取结果同步接线方式（钟点数）。
+         * o = { hv, second, secondSide, srcHv, srcSecond }
+         * 写入：高压侧钟点数 ← 定值单「高压侧接线方式」；低压侧钟点数 ← 定值单第二侧钟点数。
+         */
+        function syncClocks(o) {
+            if (!o) { setSyncStatus('尚未读取定值单。', ''); return null; }
+            const done = [], miss = [];
+            const hvN = normClock(o.hv);
+            const scN = normClock(o.second);
+            const secText = (o.secondSide === 'medium') ? '中压' : '低压';
+
+            if (hvN !== null) {
+                g('ang-hc').value = String(hvN);
+                done.push('高压侧钟点数 = ' + hvN + ' 点');
+            } else if (o.hv !== null && o.hv !== undefined) {
+                miss.push('高压侧接线方式「' + o.hv + '」不在 0~12 范围内，未写入');
+            } else {
+                miss.push('定值单中未读到高压侧接线方式');
+            }
+
+            if (scN !== null) {
+                g('ang-lc').value = String(scN);
+                done.push(secText + '侧钟点数 = ' + scN + ' 点');
+            } else if (o.second !== null && o.second !== undefined) {
+                miss.push('第二侧钟点数「' + o.second + '」不在 0~12 范围内，未写入');
+            } else {
+                miss.push('定值单中未读到' + secText + '侧钟点数');
+            }
+
+            render();
+
+            let html = done.length ? '已同步：' + done.join('，') + '。' : '';
+            if (miss.length) html += (html ? ' ' : '') + '⚠️ ' + miss.join('；') + '。';
+            const src = [];
+            if (o.srcHv) src.push('高压侧 ' + o.srcHv);
+            if (o.srcSecond) src.push(secText + '侧 ' + o.srcSecond);
+            if (src.length) html += '（来源：' + src.join('；') + '）';
+            if (!html) html = '定值单中未读到接线方式（钟点数）。';
+            setSyncStatus(html, (done.length && !miss.length) ? 'ok' : 'warn');
+            return { done: done, miss: miss };
+        }
+
+        function bind() {
+            fillClocks();
+            const hc = g('ang-hc'), lc = g('ang-lc');
+            if (!hc || !lc) return;
+            hc.value = '0';
+            lc.value = '11';
+            ['ang-hy', 'ang-hc', 'ang-lc', 'ang-ha', 'ang-sq', 'ang-rg'].forEach(function (id) {
+                const el = g(id);
+                if (!el) return;
+                el.addEventListener('change', render);
+                if (id === 'ang-ha') el.addEventListener('input', render);
+            });
+            document.querySelectorAll('[data-ang-preset]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const ha = g('ang-ha');
+                    if (ha) ha.value = btn.getAttribute('data-ang-preset');
+                    render();
+                });
+            });
+            const cb = g('ang-calc-btn');
+            if (cb) cb.addEventListener('click', render);
+
+            // 从定值单同步接线方式（钟点数）
+            const sb = g('ang-sync-btn');
+            if (sb) sb.addEventListener('click', function () {
+                const o = (typeof SettingReader !== 'undefined' && SettingReader.getClocks) ? SettingReader.getClocks() : null;
+                if (!o) { setSyncStatus('尚未读取定值单，请先在「定值单读取」模块选择定值单文件。', 'warn'); return; }
+                syncClocks(o);
+            });
+
+            render();
+        }
+
+        return { bind: bind, render: render, compute: compute, syncClocks: syncClocks, normClock: normClock, setSyncStatus: setSyncStatus };
+    })();
+
+    /* ============================================================
+     * 10c. 可选模块 B：定值单读取
+     *      按「定值名称关键字」匹配提取变压器差动六类参数（不依赖固定行列）。
+     * ============================================================ */
+    const SettingReader = (function () {
+        const g = function (id) { return document.getElementById(id); };
+        let cur = null;          // 最近一次解析结果
+        let curName = '';
+
+        /* ---------- 匹配规则 ---------- */
+        const FIELDS = [
+            { grp: '① 额定容量', key: 'hvCapacity', label: '高中压侧额定容量', unit: 'MVA', dir: 'right',
+              name: ['高中压侧额定容量', '高压侧额定容量', '高中压侧容量', '高压侧容量'], re: [/^(高中压|高压)侧额定容量$/, /^(高中压|高压)侧容量$/] },
+            { grp: '① 额定容量', key: 'lvCapacity', label: '低压侧额定容量', unit: 'MVA', dir: 'right',
+              name: ['低压侧额定容量', '低压侧容量'], re: [/^低压侧额定容量$/, /^低压侧容量$/] },
+
+            { grp: '② 接线方式', key: 'hvConn', label: '高压侧接线方式（钟点数）', unit: '点', dir: 'right',
+              name: ['高压侧接线方式', '高压侧接线方式钟点数'], re: [/^高压侧接线方式(钟点数)?$/],
+              note: '钟点数：0 即 0 点（12 点），与中压/低压侧钟点数同单位' },
+            { grp: '② 接线方式', key: 'mvConnClock', label: '中压侧接线方式钟点数', unit: '点', dir: 'right',
+              name: ['中压侧接线方式钟点数', '中压侧钟点数'], re: [/^中压侧接线方式钟点数$/] },
+            { grp: '② 接线方式', key: 'lvConnClock', label: '低压侧接线方式钟点数', unit: '点', dir: 'right',
+              name: ['低压侧接线方式钟点数', '低压侧钟点数'], re: [/^低压侧接线方式钟点数$/] },
+
+            { grp: '③ 额定电压', key: 'hvVoltage', label: '高压侧额定电压', unit: 'kV', dir: 'right',
+              name: ['高压侧额定电压'], re: [/^高压侧额定电压$/] },
+            { grp: '③ 额定电压', key: 'mvVoltage', label: '中压侧额定电压', unit: 'kV', dir: 'right',
+              name: ['中压侧额定电压'], re: [/^中压侧额定电压$/] },
+            { grp: '③ 额定电压', key: 'lvVoltage', label: '低压侧额定电压', unit: 'kV', dir: 'right',
+              name: ['低压侧额定电压'], re: [/^低压侧额定电压$/] },
+
+            { grp: '④ CT 一二次值', key: 'hvCt1', label: '高压侧CT一次值', unit: 'A', dir: 'right',
+              name: ['高压侧CT一次值'], re: [/^高压侧CT一次值$/] },
+            { grp: '④ CT 一二次值', key: 'hvCt2', label: '高压侧CT二次值', unit: 'A', dir: 'right',
+              name: ['高压侧CT二次值'], re: [/^高压侧CT二次值$/] },
+            { grp: '④ CT 一二次值', key: 'mvCt1', label: '中压侧CT一次值', unit: 'A', dir: 'right',
+              name: ['中压侧CT一次值'], re: [/^中压侧CT一次值$/] },
+            { grp: '④ CT 一二次值', key: 'mvCt2', label: '中压侧CT二次值', unit: 'A', dir: 'right',
+              name: ['中压侧CT二次值'], re: [/^中压侧CT二次值$/] },
+            { grp: '④ CT 一二次值', key: 'lvCt1', label: '低压侧CT一次值', unit: 'A', dir: 'right',
+              name: ['低压1分支CT一次值', '低压侧CT一次值', '低压分支CT一次值'], re: [/^低压[12１２]分支CT一次值$/, /^低压侧CT一次值$/] },
+            { grp: '④ CT 一二次值', key: 'lvCt2', label: '低压侧CT二次值', unit: 'A', dir: 'right',
+              name: ['低压1分支CT二次值', '低压侧CT二次值', '低压分支CT二次值'], re: [/^低压[12１２]分支CT二次值$/, /^低压侧CT二次值$/] },
+            { grp: '④ CT 一二次值', key: 'lv2Ct1', label: '低压2分支CT一次值', unit: 'A', dir: 'right',
+              name: ['低压2分支CT一次值'], re: [/^低压[2２]分支CT一次值$/] },
+            { grp: '④ CT 一二次值', key: 'lv2Ct2', label: '低压2分支CT二次值', unit: 'A', dir: 'right',
+              name: ['低压2分支CT二次值'], re: [/^低压[2２]分支CT二次值$/] },
+
+            { grp: '⑤ 速断电流定值', key: 'instCurrent', label: '纵差差动速断电流定值', unit: 'Ie', dir: 'right',
+              name: ['纵差差动速断电流定值', '差动速断电流定值', '差动保护速断电流定值', '速断电流定值'],
+              re: [/差动速断电流定值$/, /^速断电流定值$/] },
+            { grp: '⑥ 启动电流定值', key: 'startCurrent', label: '纵差保护启动电流定值', unit: 'Ie', dir: 'right',
+              name: ['纵差保护启动电流定值', '差动保护启动电流定值', '差动启动电流定值', '启动电流定值'],
+              re: [/差动保护?启动电流定值$/, /^启动电流定值$/] }
+        ];
+
+        /* 值为 0 表示「该侧 / 该分支未投用」的字段（仅 CT 类）。
+           ⚠️ 接线方式（钟点数）的 0 是有效值（0 点 / 12 点），不得套用「未投用」标签。 */
+        FIELDS.forEach(function (fd) { if (/Ct[12]$/.test(fd.key)) fd.zeroUnused = true; });
+
+        /* 装置/定值单标识（用于溯源，dir 指明取值方向） */
+        const META = [
+            { key: 'sheetNo',  label: '定值单编号',   name: ['定值单编号'],               dir: 'right' },
+            { key: 'station',  label: '设备所属',     name: ['设备所属'],                 dir: 'below' },
+            { key: 'equip',    label: '一次设备名称', name: ['一次设备名称'],             dir: 'below' },
+            { key: 'devName',  label: '保护装置名称', name: ['保护装置名称'],             dir: 'below' },
+            { key: 'devModel', label: '保护装置型号', name: ['保护装置型号'],             dir: 'below' },
+            { key: 'devVer',   label: '装置版本',     name: ['装置版本'],                 dir: 'right' },
+            { key: 'date',     label: '日期',         name: ['日期'],                     dir: 'right' }
+        ];
+
+        const ALL_NAMES = (function () {
+            const s = {};
+            FIELDS.forEach(function (f) { f.name.forEach(function (n) { s[n] = 1; }); });
+            META.forEach(function (m) { m.name.forEach(function (n) { s[n] = 1; }); });
+            return s;
+        })();
+
+        /** 规范化：去空白、去括号（含单位）、去冒号 */
+        function norm(v) {
+            return String(v === null || v === undefined ? '' : v)
+                .replace(/[\s\u3000]+/g, '')
+                .replace(/[（(][^）)]*[）)]/g, '')
+                .replace(/[：:]/g, '')
+                .replace(/[（(）)]/g, '');
+        }
+        function isKnownLabel(txt) { return !!ALL_NAMES[txt]; }
+        function addr(r, c) {
+            try { return XLSX.utils.encode_cell({ r: r, c: c }); } catch (e) { return 'R' + r + 'C' + c; }
+        }
+        function matchField(label) {
+            let i;
+            for (i = 0; i < FIELDS.length; i++) if (FIELDS[i].name.indexOf(label) >= 0) return FIELDS[i];
+            for (i = 0; i < FIELDS.length; i++) {
+                const f = FIELDS[i];
+                for (let k = 0; k < f.re.length; k++) if (f.re[k].test(label)) return f;
+            }
+            return null;
+        }
+        /** 同行右侧第一个数值单元格 */
+        function pickValue(row, fromCol) {
+            for (let c = fromCol + 1; c < row.length; c++) {
+                const v = row[c];
+                if (v === null || v === undefined || v === '') continue;
+                if (typeof v === 'number' && isFinite(v)) return { value: v, col: c };
+                const t = String(v).replace(/[\s\u3000]/g, '');
+                if (/^-?\d+(\.\d+)?$/.test(t)) return { value: parseFloat(t), col: c };
+            }
+            return null;
+        }
+        /** 元数据取值：按 dir 指定方向，且拒绝取到另一个已知标签 */
+        function pickMeta(aoa, r, c, dir) {
+            const cands = [];
+            const row = aoa[r] || [];
+            if (dir === 'below') {
+                for (let rr = r + 1; rr < Math.min(aoa.length, r + 5); rr++) cands.push({ r: rr, c: c, v: (aoa[rr] || [])[c] });
+            } else {
+                for (let cc = c + 1; cc < row.length; cc++) cands.push({ r: r, c: cc, v: row[cc] });
+            }
+            for (let i = 0; i < cands.length; i++) {
+                const v = cands[i].v;
+                if (v === null || v === undefined || v === '') continue;
+                const t = String(v).trim();
+                if (!t) continue;
+                if (isKnownLabel(norm(t))) continue;
+                return { value: t, row: cands[i].r, col: cands[i].c };
+            }
+            return null;
+        }
+
+        /* ---------- 扫描整个工作簿 ---------- */
+        function scanWorkbook(wb) {
+            const out = { fields: {}, meta: {}, sheets: [], scannedCells: 0 };
+            const names = (wb && wb.SheetNames) || [];
+            for (let si = 0; si < names.length; si++) {
+                const sname = names[si];
+                const ws = wb.Sheets[sname];
+                if (!ws) continue;
+                let aoa = null;
+                try { aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true }); }
+                catch (e) { continue; }
+                if (!aoa || !aoa.length) continue;
+                out.sheets.push(sname);
+
+                const colHead = {};     // 列号 -> '一次值'/'二次值'/'定值'/'整定值'
+                for (let r = 0; r < aoa.length; r++) {
+                    const row = aoa[r] || [];
+                    // (1) 列头跟踪（该行仅作表头，不参与取值）
+                    let headerRow = false;
+                    for (let c = 0; c < row.length; c++) {
+                        const t = norm(row[c]);
+                        if (t === '一次值' || t === '二次值' || t === '定值' || t === '整定值') { colHead[c] = t; headerRow = true; }
+                    }
+                    if (headerRow) continue;
+
+                    const labelCells = [];
+                    for (let c = 0; c < row.length; c++) {
+                        const lab = norm(row[c]);
+                        if (!lab) continue;
+                        labelCells.push({ c: c, lab: lab });
+                    }
+                    out.scannedCells += labelCells.length;
+
+                    for (let li = 0; li < labelCells.length; li++) {
+                        const c = labelCells[li].c, lab = labelCells[li].lab;
+                        // (2) 定值字段
+                        const mf = matchField(lab);
+                        if (mf && !out.fields[mf.key]) {
+                            const pv = pickValue(row, c);
+                            if (pv) {
+                                out.fields[mf.key] = Object.assign({}, mf, {
+                                    value: pv.value,
+                                    cell: addr(r, pv.col),
+                                    sheet: sname,
+                                    colHead: colHead[pv.col] || ''
+                                });
+                                continue;
+                            }
+                        }
+                        // (3) 元数据
+                        for (let mi = 0; mi < META.length; mi++) {
+                            const mm = META[mi];
+                            if (out.meta[mm.key]) continue;
+                            if (mm.name.indexOf(lab) < 0) continue;
+                            const tv = pickMeta(aoa, r, c, mm.dir);
+                            if (tv) out.meta[mm.key] = { label: mm.label, value: tv.value, cell: addr(tv.row, tv.col), sheet: sname };
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+
+        /* ---------- 渲染 ---------- */
+        function secondSide() {
+            const el = g('set-second-side');
+            return el ? el.value : 'low';
+        }
+        function fmtVal(f) {
+            if (!f) return '';
+            const v = f.value;
+            return (typeof v === 'number' && Math.abs(v - Math.round(v)) < 1e-9) ? String(Math.round(v)) : String(v);
+        }
+        function render() {
+            const box = g('set-result');
+            if (!box) return;
+            if (!cur) {
+                box.innerHTML = '<div class="opt-meta" style="opacity:0.7;">尚未读取定值单。点击上方「选择定值单文件」后，此处将列出提取到的六类参数及来源定位。</div>';
+                return;
+            }
+
+            const f = cur.fields;
+            const order = [];
+            const groups = {};
+            FIELDS.forEach(function (fd) {
+                if (!groups[fd.grp]) { groups[fd.grp] = []; order.push(fd.grp); }
+                groups[fd.grp].push(fd.key);
+            });
+
+            let html = '';
+            html += '<table class="opt-table"><thead><tr>'
+                  + '<th>参数名称</th><th>定值</th><th>单位</th><th>取值口径</th><th>来源定位</th>'
+                  + '</tr></thead><tbody>';
+
+            let found = 0, miss = 0;
+            order.forEach(function (grp) {
+                html += '<tr class="opt-group"><td colspan="5">' + grp + '</td></tr>';
+                groups[grp].forEach(function (key) {
+                    const fd = FIELDS.filter(function (x) { return x.key === key; })[0];
+                    const hit = f[key];
+                    if (hit) {
+                        found++;
+                        let tag = '';
+                        if (fd.warn) tag += '<span class="opt-tag warn">' + fd.warn + '</span>';
+                        if (fd.note) tag += '<span class="opt-tag">' + fd.note + '</span>';
+                        if (hit.value === 0 && fd.zeroUnused) tag += '<span class="opt-tag">值为 0（通常表示该侧/该分支未投用）</span>';
+                        html += '<tr><td class="opt-k" data-label="参数名称">' + fd.label + tag + '</td>'
+                              + '<td class="opt-v" data-label="定值">' + fmtVal(hit) + '</td>'
+                              + '<td class="opt-u" data-label="单位">' + (fd.unit || '—') + '</td>'
+                              + '<td class="opt-h" data-label="取值口径">' + (hit.colHead || '定值') + '</td>'
+                              + '<td class="opt-s" data-label="来源定位">' + hit.sheet + ' · ' + hit.cell + '</td></tr>';
+                    } else {
+                        miss++;
+                        html += '<tr><td class="opt-k" data-label="参数名称">' + fd.label + '</td>'
+                              + '<td class="opt-v opt-miss" data-label="结果" colspan="4">未找到（名称不匹配，请核对原件）</td></tr>';
+                    }
+                });
+            });
+            html += '</tbody></table>';
+
+            // 元数据
+            const mKeys = ['station', 'equip', 'devName', 'devModel', 'devVer', 'sheetNo', 'date'];
+            const mParts = [];
+            mKeys.forEach(function (k) {
+                if (cur.meta[k]) mParts.push(cur.meta[k].label + '：' + cur.meta[k].value);
+            });
+            if (mParts.length) {
+                html += '<div class="opt-meta"><strong>定值单标识（用于溯源）：</strong><br>' + mParts.join('　·　') + '</div>';
+            }
+
+            // 提示
+            const notes = [];
+            notes.push('识别到 ' + found + ' 项，未找到 ' + miss + ' 项。');
+            if (f.hvConn) {
+                const hvClock = AngleModule.normClock(f.hvConn.value);
+                notes.push('「高压侧接线方式」按<b>钟点数</b>解读：<b>' + fmtVal(f.hvConn) + ' 即 ' + (hvClock === null ? '—' : hvClock) + ' 点</b>（12 点记作 0），与「中压侧 / 低压侧接线方式钟点数」<b>同单位</b>。');
+            }
+            if (f.hvConn || f.lvConnClock || f.mvConnClock) {
+                const secText = (secondSide() === 'low') ? '低压' : '中压';
+                notes.push('接线方式（钟点数）已同步到「二次电流角度计算器」：<b>高压侧</b> → 高压侧钟点数；<b>' + secText + '侧</b> → 低压侧钟点数（第二侧按上方选择；切换第二侧后会自动重同步，也可在该模块内手动同步或直接改）。实际写入结果见该模块顶部的<strong>同步状态</strong>。');
+            }
+            if (f.instCurrent || f.startCurrent) notes.push('⑤⑥ 两项定值单标注单位为 <b>Ie（额定电流倍数）</b>，与本工具「保护参数」页的 <b>pu</b> 口径一致（同以额定电流为基准），可直接写入。');
+            notes.push('三绕组定值单写入两绕组工具时，「第二侧」请在下方选择；当前选择：<b>' + (secondSide() === 'low' ? '低压侧' : '中压侧') + '</b>。');
+            html += '<div class="note" style="margin-top:12px;"><strong>读取说明</strong><br>· ' + notes.join('<br>· ') + '</div>';
+
+            box.innerHTML = html;
+        }
+
+        /* ---------- 与「二次电流角度计算器」同步接线方式（钟点数） ---------- */
+        /**
+         * 返回供角度计算器同步的接线方式（钟点数）与溯源信息。
+         * 「高压侧接线方式」按钟点数解读（0 即 0 点 / 12 点），与中压/低压侧钟点数同单位。
+         * 第二侧按「第二侧选择」取低压侧或中压侧钟点数。
+         */
+        function getClocks() {
+            if (!cur) return null;
+            const f = cur.fields;
+            const sec = secondSide();
+            const secKey = (sec === 'low') ? 'lvConnClock' : 'mvConnClock';
+            const gv = function (k) { return f[k] ? f[k].value : null; };
+            const srcOf = function (k) { return f[k] ? (f[k].sheet + ' · ' + f[k].cell) : ''; };
+            return {
+                hv: gv('hvConn'),
+                second: gv(secKey),
+                secondSide: sec,
+                srcHv: srcOf('hvConn'),
+                srcSecond: srcOf(secKey),
+                model: (cur.meta.devModel && cur.meta.devModel.value) || ''
+            };
+        }
+        /** 把接线方式（钟点数）同步到角度计算器；未读取定值单时不做任何事 */
+        function syncToAngle() {
+            const o = getClocks();
+            if (!o) return null;
+            if (typeof AngleModule !== 'undefined' && AngleModule.syncClocks) return AngleModule.syncClocks(o);
+            return null;
+        }
+
+        function setStatus(msg) {
+            const el = g('set-status');
+            if (el) el.innerHTML = msg;
+        }
+
+        /* ---------- 解析入口 ---------- */
+        function parseArrayBuffer(buf, fileName) {
+            if (typeof XLSX === 'undefined') {
+                cur = null;
+                setStatus('<span class="opt-miss">⚠️ 表格解析库（SheetJS）未加载，无法读取定值单。请联网后刷新页面重试。</span>');
+                render();
+                return;
+            }
+            try {
+                const wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+                cur = scanWorkbook(wb);
+                curName = fileName || '';
+                if (!cur.sheets.length) {
+                    cur = null;
+                    setStatus('<span class="opt-miss">⚠️ 未读取到任何工作表，请确认文件为标准 Excel/CSV 定值单。</span>');
+                    render();
+                    return;
+                }
+                const n = Object.keys(cur.fields).length;
+                setStatus('已读取：<strong>' + curName + '</strong>　|　工作表 ' + cur.sheets.length + ' 个（' + cur.sheets.join('、') + '）　|　命中定值字段 ' + n + ' 项');
+                syncToAngle();          // 接线方式（钟点数）自动同步到角度计算器
+                render();
+                showToast('定值单解析完成，命中 ' + n + ' 项');
+            } catch (err) {
+                cur = null;
+                setStatus('<span class="opt-miss">⚠️ 解析失败：' + (err && err.message ? err.message : err) + '</span>');
+                render();
+            }
+        }
+
+        function onFile(file) {
+            if (!file) return;
+            setStatus('正在读取 ' + file.name + ' …');
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try { parseArrayBuffer(e.target.result, file.name); }
+                catch (err) {
+                    setStatus('<span class="opt-miss">⚠️ 文件读取失败：' + (err && err.message ? err.message : err) + '</span>');
+                }
+            };
+            reader.onerror = function () {
+                setStatus('<span class="opt-miss">⚠️ 文件读取失败（FileReader error）。</span>');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        /* ---------- 写入其他标签页 ---------- */
+        function applyToBasic() {
+            if (!cur) { showToast('请先选择并读取定值单'); return; }
+            const f = cur.fields;
+            const sec = secondSide();
+            const val = function (k) { return f[k] ? f[k].value : null; };
+            const setV = function (id, v) { const el = g(id); if (el && v !== null && v !== undefined && v !== '') el.value = v; };
+            const setSel = function (id, v) {
+                const el = g(id);
+                if (!el || v === null || v === undefined) return;
+                const s = String(v);
+                for (let i = 0; i < el.options.length; i++) if (el.options[i].value === s) { el.selectedIndex = i; return; }
+            };
+
+            const lvCap = (sec === 'low') ? val('lvCapacity') : (val('hvCapacity') !== null ? val('hvCapacity') : val('lvCapacity'));
+            const lvVol = (sec === 'low') ? val('lvVoltage') : val('mvVoltage');
+            const lvCt1 = (sec === 'low') ? val('lvCt1') : val('mvCt1');
+            const lvCt2 = (sec === 'low') ? val('lvCt2') : val('mvCt2');
+
+            const applied = [];
+            if (val('hvCapacity') !== null) { setV('hv-capacity', val('hvCapacity')); applied.push('高压侧容量'); }
+            if (lvCap !== null) { setV('lv-capacity', lvCap); applied.push((sec === 'low' ? '低压' : '中压') + '侧容量'); }
+            if (val('hvVoltage') !== null) { setV('hv-voltage', val('hvVoltage')); applied.push('高压侧电压'); }
+            if (lvVol !== null) { setV('lv-voltage', lvVol); applied.push((sec === 'low' ? '低压' : '中压') + '侧电压'); }
+            if (val('hvCt1') !== null) { setV('hv-ct-primary', val('hvCt1')); applied.push('高压侧CT一次'); }
+            if (val('hvCt2') !== null) { setSel('hv-ct-secondary', val('hvCt2')); applied.push('高压侧CT二次'); }
+            if (lvCt1 !== null) { setV('lv-ct-primary', lvCt1); applied.push((sec === 'low' ? '低压' : '中压') + '侧CT一次'); }
+            if (lvCt2 !== null) { setSel('lv-ct-secondary', lvCt2); applied.push((sec === 'low' ? '低压' : '中压') + '侧CT二次'); }
+
+            if (!applied.length) { showToast('定值单中未提取到可写入「基本参数」页的项'); return; }
+
+            // 同步第二侧选择与标签
+            const ss = g('sync-side-select');
+            if (ss) ss.value = sec;
+            state.side = sec;
+            updateSideLabels();
+            updateBasicResults();
+            showToast('已写入「基本参数」页：' + applied.join('、'));
+        }
+
+        function applyToProtect() {
+            if (!cur) { showToast('请先选择并读取定值单'); return; }
+            const f = cur.fields;
+            const sVal = f.startCurrent ? f.startCurrent.value : null;
+            const iVal = f.instCurrent ? f.instCurrent.value : null;
+            const applied = [];
+            if (sVal !== null) { g('icq').value = sVal; applied.push('启动电流 Icq = ' + sVal + ' pu'); }
+            if (iVal !== null) { g('inst-id').value = iVal; applied.push('速断电流 I>> = ' + iVal + ' pu'); }
+            if (!applied.length) { showToast('定值单中未提取到速断 / 启动电流定值'); return; }
+            // 启动电流影响比率制动特性，重算临界 ID 并重绘
+            onK0Input();
+            showToast('已写入「保护参数」页：' + applied.join('，'));
+        }
+
+        function clearAll() {
+            cur = null; curName = '';
+            const fi = g('set-file');
+            if (fi) fi.value = '';
+            setStatus('未选择文件。');
+            render();
+        }
+
+        function bind() {
+            const pick = g('set-pick-btn'), fi = g('set-file');
+            if (pick && fi) {
+                pick.addEventListener('click', function () { fi.click(); });
+                fi.addEventListener('change', function (e) {
+                    if (e.target.files && e.target.files.length) onFile(e.target.files[0]);
+                });
+            }
+            const cl = g('set-clear-btn');
+            if (cl) cl.addEventListener('click', clearAll);
+            const ss = g('set-second-side');
+            if (ss) ss.addEventListener('change', function () { render(); syncToAngle(); });
+            const b1 = g('set-to-basic');
+            if (b1) b1.addEventListener('click', applyToBasic);
+            const b2 = g('set-to-protect');
+            if (b2) b2.addEventListener('click', applyToProtect);
+        }
+
+        return { bind: bind, render: render, clear: clearAll, getClocks: getClocks, syncToAngle: syncToAngle, _scan: scanWorkbook, _parse: parseArrayBuffer, _norm: norm };
+    })();
+
+    /* ============================================================
+     * 10c. 可选模块 D：表显数值反算（表显 A → ID/IR → 三相 / 两相试验）
+     * ============================================================ */
+
+    /**
+     * 结构化反推：由 ID、Ir (pu) 求 I1、I2 (pu)。
+     * 与 performInverseCalculationRaw()（HTML 版，供「反推I1/I2」页）使用同一组公式与判据，
+     * 但返回结构化结果，供「表显数值反算」模块复用。两者结果必须一致（测试已交叉验证）。
+     *   status: 'ok'（唯一解）| 'free'（解含变量）| 'none'（无解）
+     */
+    function solveI1I2FromIdIr(id, ir, idFormula, irFormula) {
+        const idSum  = (idFormula === 'abs(i1+i2)');
+        const idDiff = (idFormula === 'abs(i1-i2)');
+        const irSum  = (irFormula === 'abs(i1+i2)/2');
+        const irDiff = (irFormula === 'abs(i1-i2)/2');
+
+        // 这两种组合下 ID 由 IR 唯一确定：必须 ID = 2IR，否则无解；相等时解含变量
+        if ((irSum && idSum) || (irDiff && idDiff)) {
+            if (Math.abs(id - 2 * ir) > EPSILON) return { status: 'none', msg: '无解：ID ≠ 2IR（本公式组合下 ID 由 IR 唯一确定）' };
+            return { status: 'free', msg: '解含变量：I1 任意，试验值不唯一' };
+        }
+        if (irSum && idDiff) return { status: 'ok', i1: (2 * ir + id) / 2, i2: (2 * ir - id) / 2 };
+        if (irDiff && idSum) return { status: 'ok', i1: (id + 2 * ir) / 2, i2: (id - 2 * ir) / 2 };
+        // IR = (|I1| + |I2|)/2
+        if (id > 2 * ir + EPSILON) return { status: 'none', msg: '无解：ID > 2IR（超出该制动公式的可达范围）' };
+        return { status: 'ok', i1: ir + id / 2, i2: ir - id / 2 };
+    }
+
+    const DisplayReverseModule = (function () {
+        const g = function (id) { return document.getElementById(id); };
+
+        // D-3.2.4 起只保留「当前点」一个点位（对应「表显数值」页的当前点差动 / 制动）
+        const POINTS = [
+            { key: 'cur', label: '当前点', pageDiff: 'display-diff', pageBrake: 'display-brake',
+              inDiff: 'drv-cur-diff', inBrake: 'drv-cur-brake', mirror: 'drv-cur-page' }
+        ];
+
+        let pulled = false;
+        let lastPullHit = [];   // 最近一次「读取表显数值页」命中的点位（D-3.2.3 漏声明 → 严格模式下抛 ReferenceError）
+
+        /** 解析页面显示值（'--' / 空 / 非数 → null） */
+        function num(s) {
+            const t = String(s == null ? '' : s).trim();
+            if (t === '' || t === '--') return null;
+            const v = parseFloat(t);
+            return isFinite(v) ? v : null;
+        }
+        function setStatus(html) { const el = g('drv-status'); if (el) el.innerHTML = html; }
+        function val(id) { const el = g(id); return el ? String(el.value).trim() : ''; }
+
+        /** 刷新「页内当前值」列（只读显示，不覆盖输入框） */
+        function refreshMirror() {
+            POINTS.forEach(function (p) {
+                const dEl = g(p.pageDiff), bEl = g(p.pageBrake);
+                const dv = dEl ? num(dEl.innerHTML) : null;
+                const bv = bEl ? num(bEl.innerHTML) : null;
+                const mi = g(p.mirror);
+                if (!mi) return;
+                mi.innerHTML = (dv === null || bv === null)
+                    ? '<span style="opacity:0.65;">--（该点尚未设定）</span>'
+                    : dv.toFixed(4) + ' / ' + bv.toFixed(4);
+            });
+        }
+
+        /** 读取「表显数值」页当前显示值 → 输入框（该点为 -- 时跳过，保留手动值） */
+        function pull(quiet) {
+            const hit = [];
+            POINTS.forEach(function (p) {
+                const dEl = g(p.pageDiff), bEl = g(p.pageBrake);
+                const dv = dEl ? num(dEl.innerHTML) : null;
+                const bv = bEl ? num(bEl.innerHTML) : null;
+                const di = g(p.inDiff), bi = g(p.inBrake);
+                if (di && dv !== null) di.value = dv;
+                if (bi && bv !== null) bi.value = bv;
+                if (dv !== null && bv !== null) hit.push(p.label);
+            });
+            refreshMirror();
+            pulled = true;
+            lastPullHit = hit;
+            if (!quiet) showToast(hit.length ? '已读取表显数值（' + hit.length + ' 个点位）' : '表显数值为空，可手动输入');
+            // 状态栏统一由 recalc() 输出（含数据来源），此处不写，避免紧接着被覆盖
+            return hit.length;
+        }
+
+        /** 反算并渲染 */
+        function recalc() {
+            const box = g('drv-result');
+            if (!box) return;
+            const d = calculateDerived();
+            const sideText = state.side === 'low' ? '低压' : '中压';
+            const conn = state.connectionType;
+            const idSel = g('idFormula'), irSel = g('irFormula');
+            const idFormula = idSel ? idSel.value : 'abs(i1+i2)';
+            const irFormula = irSel ? irSel.value : '(abs(i1)+abs(i2))/2';
+            const idFText = idSel ? idSel.options[idSel.selectedIndex].text.split('（')[0] : idFormula;
+            const irFText = irSel ? irSel.options[irSel.selectedIndex].text.split('（')[0] : irFormula;
+
+            if (!(d.hvCurrent > 0) || !(d.lvCurrent > 0)) {
+                box.innerHTML = '<div class="drv-warn">⚠️ 高压 / ' + sideText + '侧额定二次电流无效（为 0），请先到「基本参数」页检查容量、电压与 CT 参数。</div>';
+                return;
+            }
+
+            const rows = [];
+            POINTS.forEach(function (p) {
+                const rawD = val(p.inDiff), rawB = val(p.inBrake);
+                if (rawD === '' && rawB === '') return;               // 该行无输入 → 跳过
+                const diffA = parseFloat(rawD), brakeA = parseFloat(rawB);
+                if (!isFinite(diffA) || !isFinite(brakeA)) {
+                    rows.push({ p: p, bad: '差动、制动表显值须都填写' });
+                    return;
+                }
+                const id = diffA / d.hvCurrent;                        // 表显 A → 标幺（以高压侧额定二次电流为基准）
+                const ir = brakeA / d.hvCurrent;
+                const sol = solveI1I2FromIdIr(id, ir, idFormula, irFormula);
+                const row = { p: p, id: id, ir: ir, sol: sol };
+                if (sol.status === 'ok') {
+                    row.hvThree = sol.i1 * d.hvCurrent;
+                    row.lvThree = sol.i2 * d.lvCurrent;
+                    if (conn === 'star-delta') { row.hvTwo = row.hvThree * SQRT3; row.lvTwo = row.lvThree; }
+                    else                       { row.hvTwo = row.hvThree;         row.lvTwo = row.lvThree * SQRT3; }
+                }
+                rows.push(row);
+            });
+
+            if (!rows.length) {
+                box.innerHTML = '<div class="opt-meta" style="opacity:0.7;">尚未输入表显值。点击上方「读取『表显数值』页」自动填入，或直接手动输入差动 / 制动表显值（A）。</div>';
+                setStatus(lastPullHit
+                    ? '表显来源：' + (lastPullHit.length ? lastPullHit.join('、') : '「表显数值」页无可用值，需手动输入') + '；尚未反算。'
+                    : '尚未反算。');
+                return;
+            }
+
+            let html = '<table class="opt-table"><thead><tr>'
+                     + '<th style="width:16%;">点位</th>'
+                     + '<th style="width:13%;">ID (pu)</th>'
+                     + '<th style="width:13%;">Ir (pu)</th>'
+                     + '<th style="width:29%;">三相试验 (A)<br><span style="font-weight:400;opacity:0.75;">高压侧 / ' + sideText + '侧</span></th>'
+                     + '<th style="width:29%;">两相试验 (A)<br><span style="font-weight:400;opacity:0.75;">高压侧 / ' + sideText + '侧</span></th>'
+                     + '</tr></thead><tbody>';
+
+            let okCount = 0;
+            rows.forEach(function (r) {
+                let note = '', idTxt = '—', irTxt = '—';
+                if (r.bad) {
+                    note = '<div class="opt-s drv-warn">' + r.bad + '</div>';
+                } else {
+                    idTxt = r.id.toFixed(4);
+                    irTxt = r.ir.toFixed(4);
+                    if (r.sol.status !== 'ok') {
+                        note = '<div class="opt-s drv-warn">' + r.sol.msg + '</div>';
+                    } else {
+                        okCount++;
+                        if (r.hvThree < 0 || r.lvThree < 0) note = '<div class="opt-s">负值 = 该侧须<strong>反向接入</strong>（与第一侧极性相反）</div>';
+                    }
+                }
+                html += '<tr><td class="opt-k" data-label="点位">' + r.p.label + note + '</td>'
+                      + '<td class="drv-val" data-label="ID (pu)">' + idTxt + '</td>'
+                      + '<td class="drv-val" data-label="Ir (pu)">' + irTxt + '</td>';
+                if (!r.bad && r.sol.status === 'ok') {
+                    html += '<td class="drv-val" data-label="三相试验 (A) 高压 / ' + sideText + '">' + r.hvThree.toFixed(4) + '<br>' + r.lvThree.toFixed(4) + '</td>'
+                          + '<td class="drv-val" data-label="两相试验 (A) 高压 / ' + sideText + '">' + r.hvTwo.toFixed(4) + '<br>' + r.lvTwo.toFixed(4) + '</td>';
+                } else {
+                    html += '<td class="drv-val" data-label="试验值" colspan="2" style="font-weight:400;opacity:0.7;white-space:normal;">—（' + (r.bad ? '输入不完整' : (r.sol.status === 'free' ? '解含变量，试验值不唯一' : '无解')) + '）</td>';
+                }
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+
+            html += '<div class="drv-note">'
+                  + '<div><strong>换算口径（可审计）</strong></div>'
+                  + '<div>· 反算基准：高压侧额定二次电流 <strong>' + d.hvCurrent.toFixed(4) + ' A</strong>，' + sideText + '侧额定二次电流 <strong>' + d.lvCurrent.toFixed(4) + ' A</strong></div>'
+                  + '<div>· 标幺还原：<code>ID = 表显差动 ÷ 基准</code>　<code>Ir = 表显制动 ÷ 基准</code></div>'
+                  + '<div>· 反推公式（取自「反推I1/I2」页）：<strong>' + idFText + '</strong>　<strong>' + irFText + '</strong></div>'
+                  + '<div>· 试验值折算：三相试验 = 标幺电流 × 各侧额定二次电流；两相试验 = 三相试验 × √3（'
+                  + (conn === 'star-delta' ? '星转角 → 加在<strong>高压侧</strong>' : '角转星 → 加在<strong>' + sideText + '侧</strong>') + '）</div>'
+                  + '<div>· 每格上行 = 高压侧，下行 = ' + sideText + '侧</div>'
+                  + '<div>· 电流极性：两侧电流的参考方向由所选<strong>差动公式</strong>确定（ID = |I1 + I2| 为按差动回路同名端极性接入）。表格中第二侧数值即按该参考方向解得的电流；<strong>实际接入极性仍须与装置说明书核对</strong>，可用「由试验值反推 ID / IR」模块回代本组数值验证（本模块与其闭环一致）。</div>'
+                  + '<div>· ⚠️ 本结果为<strong>理论核算</strong>，实际加量与装置显示<strong>以对应型号说明书、现行定值单及现场试验为准</strong>。</div>'
+                  + '</div>';
+
+            box.innerHTML = html;
+            setStatus('已反算 <strong>' + okCount + '</strong> 个点位（共 ' + rows.length + ' 行）；表显来源：'
+                + (lastPullHit ? (lastPullHit.length ? lastPullHit.join('、') : '手动输入（页内无可用值）') : '手动输入')
+                + '；公式 / 接线方式变更后自动重算。');
+        }
+
+        /** 仅在已有输入时重算（供全局控件变更时调用，避免无谓重绘） */
+        function recalcIfReady() {
+            const any = POINTS.some(function (p) { return val(p.inDiff) !== '' || val(p.inBrake) !== ''; });
+            if (any) recalc();
+        }
+
+        function clearAll() {
+            POINTS.forEach(function (p) {
+                const di = g(p.inDiff), bi = g(p.inBrake);
+                if (di) di.value = '';
+                if (bi) bi.value = '';
+            });
+            setStatus('已清空表显值输入。可重新「读取「表显数值」页」或手动输入。');
+            recalc();
+        }
+
+        function render() {
+            if (!pulled) { pull(true); recalc(); return; }
+            recalc();
+        }
+
+        function bind() {
+            const pb = g('drv-pull-btn');
+            if (pb) pb.addEventListener('click', function () { pull(false); recalc(); });
+            const cb = g('drv-calc-btn');
+            if (cb) cb.addEventListener('click', recalc);
+            const cl = g('drv-clear-btn');
+            if (cl) cl.addEventListener('click', clearAll);
+            POINTS.forEach(function (p) {
+                [p.inDiff, p.inBrake].forEach(function (id) {
+                    const el = g(id);
+                    if (!el) return;
+                    el.addEventListener('input', recalc);
+                    el.addEventListener('change', recalc);
+                });
+            });
+        }
+
+        return { bind: bind, render: render, recalc: recalc, recalcIfReady: recalcIfReady, pull: pull, clear: clearAll };
+    })();
+
+    /* ============================================================
+     * 10e. 可选模块版本管理（D-3.2.5 新增）
+     *   · 每个可选模块带独立版本号，与主工具版本解耦；
+     *   · 唯一数据源 OPT_MODULE_VERSIONS：标题徽标 + 版本一览表 + 对外接口均由其渲染，
+     *     避免「标题写一个版本、表格写另一个版本」的两处不一致。
+     * ============================================================ */
+    const OPT_MODULE_VERSIONS = [
+        { code: 'A', id: 'setting-reader-module',  name: '定值单读取',           ver: 'v1.0',
+          since: 'D-3.2.1', changed: 'D-3.2.1',
+          note: '定值单（.xls / .xlsx / .csv）→ 六类变压器差动定值，可写入「基本参数」「保护参数」页' },
+        { code: 'B', id: 'angle-module-wrap',      name: '二次电流角度计算器',   ver: 'v1.0',
+          since: 'D-3.2.1', changed: 'D-3.2.2',
+          note: '源自独立工具 T·v1.0.0，算法未改；D-3.2.2 起可同步定值单接线方式（钟点数）' },
+        { code: 'C', id: 'test-idir-module',       name: '由试验值反推 ID / IR', ver: 'v1.0',
+          since: 'D-3.1.7', changed: 'D-3.2.2',
+          note: '原「反推I1/I2」页功能，D-3.2.2 迁入本页；公式 / 接线方式仍取全局选择' },
+        { code: 'D', id: 'display-reverse-module', name: '表显数值反算',         ver: 'v1.1',
+          since: 'D-3.2.3', changed: 'D-3.2.4',
+          note: 'v1.0（D-3.2.3）当前点 / 动作点 / 速断点三点位 → v1.1（D-3.2.4）收敛为「当前点」单点位' }
+    ];
+
+    const OptModuleVersion = (function () {
+        const esc = function (s) {
+            return String(s === null || s === undefined ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
+        function find(code) {
+            for (let i = 0; i < OPT_MODULE_VERSIONS.length; i++) {
+                if (OPT_MODULE_VERSIONS[i].code === code) return OPT_MODULE_VERSIONS[i];
+            }
+            return null;
+        }
+        /** 给各模块标题的 [data-mod-ver] 徽标填版本号（无数据时清空，不报错） */
+        function renderBadges() {
+            const list = document.querySelectorAll('[data-mod-ver]');
+            Array.prototype.forEach.call(list, function (el) {
+                const m = find(el.getAttribute('data-mod-ver'));
+                if (!m) { el.textContent = ''; el.style.display = 'none'; return; }
+                el.style.display = '';
+                el.textContent = '模块' + m.code + ' · ' + m.ver;
+                el.setAttribute('title', m.name + '：' + m.ver
+                    + '（引入 ' + m.since + '，最近变更 ' + m.changed + '）');
+                el.classList.toggle('changed', m.changed === APP_VERSION);
+            });
+        }
+        /** 渲染「可选模块版本一览」表 */
+        function renderTable() {
+            const tbody = $('opt-ver-body');
+            if (tbody) {
+                tbody.innerHTML = OPT_MODULE_VERSIONS.map(function (m) {
+                    return '<tr data-mod-row="' + esc(m.code) + '">'
+                        + '<td class="ov-code" data-label="代号">' + esc(m.code) + '</td>'
+                        + '<td data-label="模块">' + esc(m.name) + '</td>'
+                        + '<td class="ov-ver" data-label="当前版本">' + esc(m.ver) + '</td>'
+                        + '<td class="ov-since" data-label="引入版本">' + esc(m.since) + '</td>'
+                        + '<td class="ov-since" data-label="最近变更">' + esc(m.changed) + '</td>'
+                        + '<td class="opt-s" data-label="变更要点">' + esc(m.note) + '</td></tr>';
+                }).join('');
+            }
+            const app = $('opt-ver-app');
+            if (app) app.textContent = APP_VERSION;
+            const sum = $('opt-ver-summary');
+            if (sum) {
+                sum.textContent = '共 ' + OPT_MODULE_VERSIONS.length + ' 个可选模块：'
+                    + OPT_MODULE_VERSIONS.map(function (m) { return m.code + ' ' + m.ver; }).join(' · ')
+                    + '　（主工具版本 ' + APP_VERSION + '）';
+            }
+        }
+        function render() { renderBadges(); renderTable(); }
+        return { render: render, find: find, list: function () { return OPT_MODULE_VERSIONS; } };
+    })();
+
+    /* ============================================================
+     * 11. 事件绑定
+     * ============================================================ */
+    function setupListeners() {
+        // 文件操作
+        $('export-btn').addEventListener('click', exportToExcel);
+        $('import-btn').addEventListener('click', () => { $('import-file').click(); });
+        $('import-file').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                importConfig(e.target.files[0]);
+                e.target.value = '';
+            }
+        });
+
+        // 基本参数
+        $('calculate-basic').addEventListener('click', () => {
+            updateBasicResults();
+            showToast('基本计算完成');
+        });
+        $('sync-capacity-btn').addEventListener('click', syncCapacity);
+        $('sync-side-select').addEventListener('change', function () {
+            state.side = this.value;
+            updateSideLabels();
+            updateBasicResults();
+        });
+
+        // 保护参数
+        k0Presets.forEach(btn => { btn.addEventListener('click', setK0Preset); });
+        els.k0Input.addEventListener('input', onK0Input);
+        els.criticalIdInput.addEventListener('input', onCriticalIdInput);
+        els.irInput.addEventListener('input', onIrInput);
+        $('critical-state-btn').addEventListener('click', setCriticalState);
+        $('force-draw-btn').addEventListener('click', forceDrawChart);
+        // 差动保护参数任一变化 → 自动按参数重绘特性图（含速断电流 I>>，不再依赖「临界状态」按钮）
+        ['icq', 'i1', 'kbl', 'i2', 'kbl2', 'inst-id'].forEach(function (id) {
+            const el = $(id);
+            if (!el) return;
+            el.addEventListener('input', onProtectionParamInput);
+            el.addEventListener('change', onProtectionParamInput);
+        });
+        els.connectionSelect.addEventListener('change', onConnectionChange);
+
+        // 反推
+        $('calculate-inverse').addEventListener('click', calculateInverse);
+        $('inverse-action-btn').addEventListener('click', calculateActionInverse);
+        $('instant-inverse-btn').addEventListener('click', calculateInstantInverse);
+
+        // 试验值正推 ID/IR（新增）
+        $('calc-test-idir').addEventListener('click', calculateTestIdIr);
+        $('apply-test-point').addEventListener('click', applyTestPointToProtection);
+        ['test-hv', 'test-lv', 'test-type'].forEach(function (id) {
+            const el = $(id);
+            if (!el) return;
+            el.addEventListener('input', calculateTestIdIr);
+            el.addEventListener('change', calculateTestIdIr);
+        });
+        // 差动/制动公式变更后重新出结果（两侧电流符号也随之由差动公式重算）
+        ['idFormula', 'irFormula'].forEach(function (id) {
+            const el = $(id);
+            if (el) el.addEventListener('change', function () { calculateTestIdIr(); DisplayReverseModule.recalcIfReady(); });
+        });
+
+        // 可选模块（测试功能）：角度计算器 + 定值单读取
+        AngleModule.bind();
+        SettingReader.bind();
+        DisplayReverseModule.bind();
+        OptModuleVersion.render();                     // 模块版本徽标 + 版本一览表
+
+        // 标签页切换
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                $(tabId + '-tab').classList.add('active');
+                // 移动端：页签栏单行可横向滑动 → 点击后把激活页签滚到可见位置（居中）
+                try { if (btn.scrollIntoView) btn.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {}
+                if (tabId === 'results') updateBasicResults();
+                if (tabId === 'display') {
+                    updateCriticalDisplayValues();
+                    updateActionDisplayValues();
+                    updateInstantDisplayValues();
+                }
+                if (tabId === 'inverse') {
+                    syncInverseFields();
+                    showRegularInverseContainer();
+                    if (els.inverseResult.innerHTML.trim() === '') {
+                        els.inverseResult.innerHTML = '<div style="color:#666;">点击上方按钮查看反推结果</div>';
+                    }
+                }
+                if (tabId === 'protection') setTimeout(function () { refreshChartFromParams(false); }, 50);
+                if (tabId === 'optional') { AngleModule.render(); DisplayReverseModule.render(); OptModuleVersion.render(); }
+            });
+        });
+
+        // 窗口尺寸变化时重绘（仅保护参数页）
+        window.addEventListener('resize', () => {
+            if ($('protection-tab').classList.contains('active')) drawBrakeChar();
+        });
+    }
+
+    /* ============================================================
+     * 12. PWA：Service Worker 注册（离线缓存）
+     * ============================================================ */
+    function registerServiceWorker() {
+        if (!('serviceWorker' in navigator)) return;
+        window.addEventListener('load', function () {
+            const swCode = `
+                self.addEventListener('install', function(e) {
+                    e.waitUntil(
+                        caches.open('transformer-cache-v1').then(function(cache) {
+                            return cache.addAll([
+                                './',
+                                './index.html',
+                                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+                                'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js'
+                            ]);
+                        })
+                    );
+                });
+                self.addEventListener('fetch', function(e) {
+                    e.respondWith(
+                        caches.match(e.request).then(function(response) {
+                            return response || fetch(e.request);
+                        })
+                    );
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl, { scope: './' })
+                .then(() => console.log('Service Worker 注册成功'))
+                .catch(err => console.warn('Service Worker 注册失败', err));
+        });
+    }
+
+    /** PWA 安装提示 */
+    function setupInstallPrompt() {
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            els.installBanner.style.display = 'block';
+        });
+        els.installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const result = await deferredPrompt.userChoice;
+                if (result.outcome === 'accepted') {
+                    els.installBanner.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+        window.addEventListener('appinstalled', () => {
+            els.installBanner.style.display = 'none';
+        });
+    }
+
+    /* ============================================================
+     * 13. 初始化
+     * ============================================================ */
+    function init() {
+        updateSideLabels();
+        updateBasicResults();
+
+        // 默认 K0 = 0 并高亮对应预设按钮
+        const initialIr = parseFloat(els.irInput.value) || 1;
+        els.k0Input.value = '0';
+        k0Presets.forEach(btn => {
+            btn.classList.remove('active');
+            if (parseFloat(btn.dataset.value) === 0) btn.classList.add('active');
+        });
+
+        // 初始临界 ID
+        const initialId = computeCriticalIdFromIr(initialIr);
+        els.criticalIdInput.value = initialId.toFixed(4);
+        state.lastCriticalId = initialId;
+        state.lastIr = initialIr;
+        syncFromInputs();
+        state.connectionType = els.connectionSelect.value;
+
+        setupListeners();
+        setTimeout(function () { refreshChartFromParams(false); }, 100);
+        showRegularInverseContainer();
+        calculateTestIdIr();
+        showToast(`综合计算器已就绪（版本 ${APP_VERSION}）`);
+    }
+
+    /* ============================================================
+     * 14. 对外接口：特性图点位坐标（供其他界面 / 模块读取）
+     * ============================================================ */
+    window.RelayModuleVersions = {
+        /** 可选模块版本清单：[{ code, id, name, ver, since, changed, note }] */
+        list: function () { return OptModuleVersion.list(); },
+        /** 按模块代号取版本记录 */
+        find: function (code) { return OptModuleVersion.find(code); },
+        /** 重渲徽标与版本一览表 */
+        render: function () { return OptModuleVersion.render(); }
+    };
+
+    window.RelayChartAPI = {
+        /** 最近一次按「差动保护参数」绘制的点位坐标：{ current, inst, knee1, knee2, maxIr, maxId, ... } */
+        getPoints: function () { return state.chartPoints; },
+        /** 强制按当前「差动保护参数」重绘并返回点位坐标 */
+        refresh: function () { return refreshChartFromParams(true); }
+    };
+
+    // ===== 启动 =====
+    registerServiceWorker();
+    setupInstallPrompt();
+    init();
+})();
+</script>
+</body>
+</html>
